@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "No-deps library for manipulating vectors and matrices with GLSL-alike syntax and excellent TypeScript support",
   "private": false,
+  "homepage": "https://github.com/TakeMeTo404/gljs#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TakeMeTo404/gljs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TakeMeTo404/gljs/issues"
+  },
+  "author": "Artem Rozhenkov",
+  "license": "ISC",
   "keywords": [
     "glsl",
     "webgl",
@@ -31,8 +41,6 @@
     "test": "tsc -p tsconfig.test.json && vitest run",
     "format": "prettier . -w"
   },
-  "author": "Artem Rozhenkov",
-  "license": "ISC",
   "devDependencies": {
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
