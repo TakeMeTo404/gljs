@@ -2,28 +2,60 @@ import { ArrayOfLength } from '../utils/ts-array'
 import { AnyNumberZeroToN } from '../utils/ts-number'
 import { VecN } from '../vec'
 
-type SquareMatrix<M extends 2 | 3 | 4, N extends 2 | 3 | 4> = M extends N
-  ? N extends M
-    ? {
-        inverse: () => MatMxN<M, N>
-        determinant: () => number
-      }
-    : {}
-  : {}
+type Operations<RowCount extends 2 | 3 | 4, ColumnCount extends 2 | 3 | 4> = {
+  <T extends '+' | '-' | '/' | '*'>(
+    op: T,
+    other: T extends '+' | '-' | '/'
+      ? number | MatRxC<RowCount, ColumnCount>
+      : T extends '*'
+        ? number | VecN<ColumnCount> | MatRxC<ColumnCount, 2 | 3 | 4>
+        : never,
+  ): T extends '+' | '-' | '/'
+    ? MatRxC<RowCount, ColumnCount>
+    : T extends '*'
+      ? typeof other extends number
+        ? MatRxC<RowCount, ColumnCount>
+        : typeof other extends VecN<ColumnCount>
+          ? VecN<RowCount>
+          : typeof other extends MatRxC<ColumnCount, 2>
+            ? MatRxC<RowCount, 2>
+            : typeof other extends MatRxC<ColumnCount, 3>
+              ? MatRxC<RowCount, 3>
+              : typeof other extends MatRxC<ColumnCount, 4>
+                ? MatRxC<RowCount, 4>
+                : unknown
+      : unknown
+
+  multiply: <T extends number | VecN<ColumnCount> | MatRxC<ColumnCount, 2 | 3 | 4>>(
+    other: T,
+  ) => T extends number
+    ? MatRxC<RowCount, ColumnCount>
+    : T extends VecN<ColumnCount>
+      ? VecN<RowCount>
+      : T extends MatRxC<ColumnCount, 2>
+        ? MatRxC<RowCount, 2>
+        : T extends MatRxC<ColumnCount, 3>
+          ? MatRxC<RowCount, 3>
+          : T extends MatRxC<ColumnCount, 4>
+            ? MatRxC<RowCount, 4>
+            : unknown
+
+  add: (other: number | MatRxC<RowCount, ColumnCount>) => MatRxC<RowCount, ColumnCount>
+  substract: (other: number | MatRxC<RowCount, ColumnCount>) => MatRxC<RowCount, ColumnCount>
+  divide: (other: number | MatRxC<RowCount, ColumnCount>) => MatRxC<RowCount, ColumnCount>
+}
 
 // M – rows, N – columns
-export type Mat<M extends 2 | 3 | 4, N extends 2 | 3 | 4 = M> = {
-  values: ArrayOfLength<ArrayOfLength<number, N>, M>
+type Mat<RowCount extends 2 | 3 | 4, ColumnCount extends 2 | 3 | 4> = {
+  values: ArrayOfLength<ArrayOfLength<number, ColumnCount>, RowCount>
 
-  copy: () => MatMxN<M, N>
+  copy: () => MatRxC<RowCount, ColumnCount>
+} & Record<AnyNumberZeroToN<RowCount>, VecN<ColumnCount>> &
+  Operations<RowCount, ColumnCount>
 
-  transpose: () => MatMxN<N, M>
-} & Record<AnyNumberZeroToN<M>, VecN<N>> &
-  SquareMatrix<M, N>
-
-export type Mat2 = Mat<2>
-export type Mat3 = Mat<3>
-export type Mat4 = Mat<4>
+export type Mat2 = Mat<2, 2>
+export type Mat3 = Mat<3, 3>
+export type Mat4 = Mat<4, 4>
 
 export type Mat2x3 = Mat<2, 3>
 export type Mat3x2 = Mat<3, 2>
@@ -34,7 +66,7 @@ export type Mat4x2 = Mat<4, 2>
 export type Mat3x4 = Mat<3, 4>
 export type Mat4x3 = Mat<4, 3>
 
-export type MatMxN<M extends number, N extends number> = M extends 2
+export type MatRxC<M extends number, N extends number> = M extends 2
   ? N extends 2
     ? Mat2
     : N extends 3
@@ -59,7 +91,3 @@ export type MatMxN<M extends number, N extends number> = M extends 2
             ? Mat4
             : never
       : never
-
-export type MatCreateArgs<M extends 2 | 3 | 4, N extends 2 | 3 | 4> =
-  | [number]
-  | ArrayOfLength<VecN<N>, M>

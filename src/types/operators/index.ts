@@ -1,4 +1,4 @@
-import { MatMxN, Mat, Mat3, Mat2, Mat3x2, Mat2x3 } from '../mat'
+// import { MatRxC, Mat, Mat3, Mat2, Mat3x2, Mat2x3 } from '../mat'
 import { ArrayOfLength } from '../utils/ts-array'
 import { Sum } from '../utils/ts-number'
 import type { Vec2, Vec3, Vec4 } from '../vec'
@@ -13,7 +13,7 @@ type VecSize<V extends Vec2 | Vec3 | Vec4> = V extends Vec2
       ? 4
       : never
 
-type GenMatrixType = Mat2 | Mat3 | Mat2x3 | Mat3x2
+// type GenMatrixType = Mat2 | Mat3 | Mat2x3 | Mat3x2
 
 export const radians = <V extends number | Vec2 | Vec3 | Vec4>(degrees: _<V>): _<V> => {
   throw new Error('not implemented')
@@ -158,9 +158,9 @@ export const normalize = <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>): _<V> 
   throw new Error('not implemented')
 }
 
-export const outerProduct = <V1 extends Vec2 | Vec3 | Vec4, V2 extends Vec2 | Vec3 | Vec4>(
-  v1: V1,
-  v2: V2,
-): MatMxN<VecSize<V1>, VecSize<V2>> => {
-  throw new Error('not implemented')
-}
+// export const outerProduct = <V1 extends Vec2 | Vec3 | Vec4, V2 extends Vec2 | Vec3 | Vec4>(
+//   v1: V1,
+//   v2: V2,
+// ): MatRxC<VecSize<V1>, VecSize<V2>> => {
+//   throw new Error('not implemented')
+// }
