@@ -1,0 +1,62 @@
+{
+  "name": "gljs",
+  "version": "0.1.0",
+  "description": "No-deps library for manipulating vectors and matrices with GLSL-alike syntax and excellent TypeScript support",
+  "private": false,
+  "keywords": [
+    "glsl",
+    "webgl",
+    "vector",
+    "matrix",
+    "math",
+    "graphics",
+    "image"
+  ],
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "tsc -p tsconfig.test.json && vitest run",
+    "format": "prettier . -w"
+  },
+  "author": "Artem Rozhenkov",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": [
+      "esm",
+      "cjs"
+    ],
+    "dts": true,
+    "outDir": "dist",
+    "clean": true,
+    "sourcemap": true
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "all",
+    "semi": false,
+    "bracketSpacing": true,
+    "bracketSameLine": false
+  }
+}
