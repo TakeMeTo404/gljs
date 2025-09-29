@@ -17,7 +17,7 @@ export type CallableVector<N extends 2 | 3 | 4> = {
 }
 
 type Vec<N extends 2 | 3 | 4> = {
-  values: ArrayOfLength<number, N>
+  // values: ArrayOfLength<number, N>
 
   get: <T extends string>(
     selection: Get_XYZW_Selection<T, N> | Get_RGBA_Selection<T, N>,
@@ -27,7 +27,9 @@ type Vec<N extends 2 | 3 | 4> = {
     selection: Set_XYZW_Selection<T, N> | Set_RGBA_Selection<T, N>,
     value: VecN<Length<T>>,
   ) => void
-} & CallableVector<N> &
+
+  copy: () => VecN<N>
+} & Iterable<number> & CallableVector<N> &
   Record<AnyNumberZeroToN<N>, number>
 
 export type Vec2 = Vec<2>

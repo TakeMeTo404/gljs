@@ -1,6 +1,7 @@
 import { operations, rgba, xyzw } from './const'
+import { createVec } from './_internal/vec'
 
-const createCallableVector = (values) => {
+const createCallableVector = (api) => {
   return (op, other) => {
     // todo: assert args
 
@@ -11,18 +12,18 @@ const createCallableVector = (values) => {
     const otherAt = typeof other === 'number' ? () => other : (i) => other[i]
 
     if (isAssignOperation) {
-      for (let i = 0; i < values.length; i++) {
-        values[i] = f(values[i], otherAt(i))
+      for (let i = 0; i < api.length; i++) {
+        api[i] = f(api[i], otherAt(i))
       }
     } else {
-      const newValues = new Array(values.length)
-      for (let i = 0; i < values.length; i++) {
-        newValues[i] = f(values[i], otherAt(i))
+      const newValues = new Array(api.length)
+      for (let i = 0; i < api.length; i++) {
+        newValues[i] = f(api[i], otherAt(i))
       }
 
-      if (values.length === 2) {
+      if (api.length === 2) {
         return vec2(...newValues)
-      } else if (values.length === 3) {
+      } else if (api.length === 3) {
         return vec3(...newValues)
       } else {
         return vec4(...newValues)
@@ -31,15 +32,15 @@ const createCallableVector = (values) => {
   }
 }
 
-const defineIndexProperties = (vec) => {
-  for (let i = 0; i < vec.values.length; i++) {
-    Object.defineProperty(vec, i, {
+const defineIndexProperties = (v, api) => {
+  for (let i = 0; i < api.n; i++) {
+    Object.defineProperty(v, i, {
       get() {
-        return vec.values[i]
+        return api[i]
       },
 
       set(v) {
-        vec.values[i] = v
+        api[i] = v
       },
     })
   }
@@ -67,11 +68,11 @@ const selectionToIndexes = (selection) => {
   return indexes
 }
 
-const defineGet = (vec) => {
-  vec.get = (selection) => {
+const defineGet = (v) => {
+  v.get = (selection) => {
     // todo: assert args
     const iArr = selectionToIndexes(selection)
-    const vArr = iArr.map((i) => vec.values[i])
+    const vArr = iArr.map((i) => api[i])
 
     switch (selection.length) {
       case 1:
@@ -100,117 +101,125 @@ const defineSet = (vec) => {
   }
 }
 
-const parseValues =
+const parseCreateArgs =
   (n) =>
   (...args) => {
     // todo: assert args
 
-    const values = new Array(n)
+    const api = {
+      n,
+    }
 
     // repeat one scalar
     if (args.length === 1 && typeof args[0] === 'number') {
-      for (let i = 0; i < n; i++) values[i] = args[0]
-      return values
+      for (let i = 0; i < n; i++) api[i] = args[0]
+      return api
     }
 
     // given N args – N scalars
     if (args.length === n) {
-      for (let i = 0; i < n; i++) values[i] = args[i]
-      return values
+      for (let i = 0; i < n; i++) api[i] = args[i]
+      return api
     }
 
     // given 1 arg – array of N scalars
     if (Array.isArray(args[0])) {
-      for (let i = 0; i < n; i++) values[i] = args[0][i]
-      return values
+      for (let i = 0; i < n; i++) api[i] = args[0][i]
+      return api
     }
 
     if (typeof args[0] === 'object' && 'x' in args[0]) {
-      for (let i = 0; i < n; i++) values[i] = args[0][xyzw[i]]
-      return values
+      for (let i = 0; i < n; i++) api[i] = args[0][xyzw[i]]
+      return api
     }
     if (typeof args[0] === 'object' && 'r' in args[0]) {
-      for (let i = 0; i < n; i++) values[i] = args[0][rgba[i]]
-      return values
+      for (let i = 0; i < n; i++) api[i] = args[0][rgba[i]]
+      return api
     }
 
     if (n === 2) {
       // now we assume args = [Vec2]
-      values[0] = args[0][0]
-      values[1] = args[0][1]
+      api[0] = args[0][0]
+      api[1] = args[0][1]
     } else if (n === 3) {
       if (args.length === 1) {
         // args: [Vec3]
-        values[0] = args[0][0]
-        values[1] = args[0][1]
-        values[2] = args[0][2]
+        api[0] = args[0][0]
+        api[1] = args[0][1]
+        api[2] = args[0][2]
       } else {
         if (typeof args[0] === 'number') {
           // args: [number, Vec2]
-          values[0] = args[0]
-          values[1] = args[1][0]
-          values[2] = args[1][1]
+          api[0] = args[0]
+          api[1] = args[1][0]
+          api[2] = args[1][1]
         } else {
           // args: [Vec2, number]
-          values[0] = args[0][0]
-          values[1] = args[0][1]
-          values[2] = args[1]
+          api[0] = args[0][0]
+          api[1] = args[0][1]
+          api[2] = args[1]
         }
       }
     } else {
       if (args.length === 1) {
         // args: [Vec4]
-        values[0] = args[0][0]
-        values[1] = args[0][1]
-        values[2] = args[0][2]
-        values[3] = args[0][3]
+        api[0] = args[0][0]
+        api[1] = args[0][1]
+        api[2] = args[0][2]
+        api[3] = args[0][3]
       } else if (args.length === 2) {
         if (typeof args[0] === 'number') {
           // args: [number, Vec3]
-          values[0] = args[0]
-          values[1] = args[1][0]
-          values[2] = args[1][1]
-          values[3] = args[1][2]
+          api[0] = args[0]
+          api[1] = args[1][0]
+          api[2] = args[1][1]
+          api[3] = args[1][2]
         } else {
           // args: [Vec3, number]
-          values[0] = args[0][0]
-          values[1] = args[0][1]
-          values[2] = args[0][2]
-          values[3] = args[1]
+          api[0] = args[0][0]
+          api[1] = args[0][1]
+          api[2] = args[0][2]
+          api[3] = args[1]
         }
       } else {
         if (typeof args[0] !== 'number') {
           // args: [Vec2, number, number]
-          values[0] = args[0][0]
-          values[1] = args[0][1]
-          values[2] = args[1]
-          values[3] = args[2]
+          api[0] = args[0][0]
+          api[1] = args[0][1]
+          api[2] = args[1]
+          api[3] = args[2]
         } else if (typeof args[1] !== 'number') {
           // args: [number, Vec2, number]
-          values[0] = args[0]
-          values[1] = args[1][0]
-          values[2] = args[1][1]
-          values[3] = args[2]
+          api[0] = args[0]
+          api[1] = args[1][0]
+          api[2] = args[1][1]
+          api[3] = args[2]
         } else {
           // args: [number, number, Vec2]
-          values[0] = args[0]
-          values[1] = args[1]
-          values[2] = args[2][0]
-          values[3] = args[2][1]
+          api[0] = args[0]
+          api[1] = args[1]
+          api[2] = args[2][0]
+          api[3] = args[2][1]
         }
       }
     }
 
-    return values
+    return api
   }
 
 const vec =
   (n) =>
   (...args) => {
-    const values = parseValues(n)(...args)
+    const api = parseCreateArgs(n)(...args)
 
-    const v = createCallableVector(values)
-    v.values = values
+    return createVec(api)
+    const v = createCallableVector(api)
+
+    v[Symbol.iterator] = function* () {
+      for (let i = 0; i < api.n; i++) {
+        yield api[i]
+      }
+    }
 
     defineIndexProperties(v)
 
