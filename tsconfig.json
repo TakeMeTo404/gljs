@@ -18,10 +18,14 @@
 
     // Recommended Options
     // "verbatimModuleSyntax": false,
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["ES2015"]
   },
   "include": ["src"]
 }

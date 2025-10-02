@@ -1,27 +1,24 @@
-import type { Vec2, Vec3, Vec4 } from '.'
+import type { Vec2, Vec3, Vec4 } from './vec'
 
-export type Vec2ContructorArgs =
+export type Vec2CreateArgs =
   | [number]
   | [number, number]
   | [[number, number]]
   | [Record<'x' | 'y', number>]
   | [Record<'r' | 'g', number>]
   | [Vec2]
-  | [Vec3]
-  | [Vec4]
 
-export type Vec3ContructorArgs =
+export type Vec3CreateArgs =
   | [number]
   | [number, number, number]
   | [[number, number, number]]
   | [Record<'x' | 'y' | 'z', number>]
   | [Record<'r' | 'g' | 'b', number>]
   | [Vec3]
-  | [Vec4]
   | [Vec2, number]
   | [number, Vec2]
 
-export type Vec4ContructorArgs =
+export type Vec4CreateArgs =
   | [number]
   | [number, number, number, number]
   | [[number, number, number, number]]
