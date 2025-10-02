@@ -209,7 +209,7 @@ describe('vec', () => {
     expect([...v4]).toEqual([r, g, b, a])
   })
 
-    it('callable vector operations', () => {
+  it('callable vector operations', () => {
     expect([...vec2(0)('+', 3)]).toEqual([3, 3])
     expect([...vec2(11, 17)('-', 22)]).toEqual([-11, -5])
 

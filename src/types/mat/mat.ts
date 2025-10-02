@@ -36,7 +36,7 @@ type MatrixIndexing<RowCount extends 2 | 3 | 4, ColumnCount extends 2 | 3 | 4> =
 
 // M – rows, N – columns
 type Mat<RowCount extends 2 | 3 | 4, ColumnCount extends 2 | 3 | 4> = {
-  values: ArrayOfLength<ArrayOfLength<number, ColumnCount>, RowCount>
+  copy: () => MatRxC<RowCount, ColumnCount>
 } & MatrixIndexing<RowCount, ColumnCount> &
   CallableMatrix<RowCount, ColumnCount>
 

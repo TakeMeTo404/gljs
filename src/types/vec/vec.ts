@@ -25,7 +25,8 @@ type Vec<N extends 2 | 3 | 4> = {
   ) => void
 
   copy: () => VecN<N>
-} & Iterable<number> & CallableVector<N> &
+} & Iterable<number> &
+  CallableVector<N> &
   Record<AnyNumberZeroToN<N>, number>
 
 export type Vec2 = Vec<2>
