@@ -22,12 +22,12 @@ const operations: Record<string, (a: number, b: number) => number> = {
   '/': (a, b) => a / b,
 }
 
-type Api = {
+export type VectorApi = {
   n: number
 } & Record<number, number>
 
-const parseArgs = (n: number, args: any[]): Api => {
-  const api: Api = {
+const parseArgs = (n: number, args: any[]): VectorApi => {
+  const api: VectorApi = {
     n,
   }
 
@@ -131,6 +131,8 @@ const parseArgs = (n: number, args: any[]): Api => {
 }
 
 export type BaseVector = {
+  _api: VectorApi
+
   get: (selection: string) => number | BaseVector
   set: (selection: string, other: number | BaseVector) => void
 
@@ -138,7 +140,7 @@ export type BaseVector = {
 } & Record<number, number> &
   Iterable<number>
 
-export const createVec = (api: Api) => {
+export const createVec = (api: VectorApi) => {
   const vec: BaseVector = ((op: string, other: number | BaseVector) => {
     // todo: assert args
 
@@ -153,7 +155,7 @@ export const createVec = (api: Api) => {
         api[i] = f(api[i], otherAt(i))
       }
     } else {
-      const newApi: Api = {
+      const newApi: VectorApi = {
         n: api.n,
       }
 
@@ -164,6 +166,8 @@ export const createVec = (api: Api) => {
       return createVec(newApi)
     }
   }) as any as BaseVector
+
+  vec._api = api
 
   vec[Symbol.iterator] = function* () {
     for (let i = 0; i < api.n; i++) {
@@ -192,7 +196,7 @@ export const createVec = (api: Api) => {
       return api[selectionIndexMap[selection[0]]]
     }
 
-    const newApi: Api = { n: selection.length }
+    const newApi: VectorApi = { n: selection.length }
     for (let i = 0; i < selection.length; i++) {
       newApi[i] = api[selectionIndexMap[selection[i]]]
     }

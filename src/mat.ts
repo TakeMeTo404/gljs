@@ -10,88 +10,73 @@ import type {
   Mat4x3,
   MatCreateArgs,
 } from './types/mat'
-import { BaseVector, createVec } from './vec'
+import { BaseVector, createVec, VectorApi } from './vec'
 
-type Api1D = {
-  n: number
-} & Record<number, number>
-
-type Api2D = {
-  n: number
-} & Record<number, Api1D>
+type MatrixApi = {
+  r: number
+  c: number
+} & Record<number, Record<number, number>>
 
 const parseArgs = (rowCount: number, columnCount: number, args: any[]) => {
-  const rowsApi: Api2D = {
-    n: rowCount,
+  const api2d: MatrixApi = {
+    r: rowCount,
+    c: columnCount,
   }
 
   for (let i = 0; i < rowCount; i++) {
-    rowsApi[i] = {
-      n: columnCount,
-    }
+    api2d[i] = {}
     for (let j = 0; j < columnCount; j++) {
-      rowsApi[i][j] = 0
+      api2d[i][j] = 0
     }
   }
 
   if (args.length === 1 && typeof args[0] === 'number') {
     const min = Math.min(rowCount, columnCount)
     for (let i = 0; i < min; i++) {
-      rowsApi[i][i] = args[0]
+      api2d[i][i] = args[0]
     }
   } else {
     for (let i = 0; i < rowCount; i++) {
       for (let j = 0; j < columnCount; j++) {
         // args[i] is arr or vec. Anyway, indexible via 0, 1, ..., c-1
-        rowsApi[i][j] = args[i][j]
+        api2d[i][j] = args[i][j]
       }
     }
   }
 
-  return rowsApi
+  return api2d
 }
 
 type BaseMatrix = {
+  _api: MatrixApi
+
   copy: () => BaseMatrix
 
   columns: Record<number, BaseVector>
 } & Record<number, BaseVector>
 
-const createMat = (rowsApi: Api2D) => {
+const createMat = (matrixApi: MatrixApi) => {
   const mat: BaseMatrix = ((
     op: string,
     other: number | BaseVector | BaseMatrix,
   ) => {}) as any as BaseMatrix
 
-  mat.copy = () => {
-    const newApi: Api2D = { n: rowsApi.n }
-    for (let i = 0; i < rowsApi.n; i++) {
-      newApi[i] = {
-        n: rowsApi[i].n,
-      }
-      for (let j = 0; j < rowsApi[i].n; j++) {
-        newApi[i][j] = rowsApi[i][j]
-      }
-    }
+  mat._api = matrixApi
 
-    return createMat(newApi)
-  }
-
-  for (let i = 0; i < rowsApi.n; i++) {
+  for (let i = 0; i < matrixApi.r; i++) {
     const _i = i
     Object.defineProperty(mat, _i, {
       get(): BaseVector {
-        const rowApi: Api1D = {
-          n: rowsApi[_i].n,
-        }
-        for (let j = 0; j < rowsApi[_i].n; j++) {
+        const rowApi: VectorApi = { n: matrixApi.c }
+
+        for (let j = 0; j < matrixApi.c; j++) {
           const _j = j
           Object.defineProperty(rowApi, _j, {
             get(): number {
-              return rowsApi[_i][_j]
+              return matrixApi[_i][_j]
             },
             set(v: number) {
-              rowsApi[_i][_j] = v
+              matrixApi[_i][_j] = v
             },
           })
         }
@@ -99,11 +84,53 @@ const createMat = (rowsApi: Api2D) => {
         return createVec(rowApi)
       },
       set(v: BaseVector) {
-        for (let j = 0; j < rowsApi[_i].n; j++) {
-          rowsApi[_i][j] = v[j]
+        for (let j = 0; j < matrixApi.r; j++) {
+          matrixApi[_i][j] = v[j]
         }
       },
     })
+  }
+
+  mat.columns = {}
+  for (let j = 0; j < matrixApi.c; j++) {
+    const _j = j
+    Object.defineProperty(mat.columns, _j, {
+      get(): BaseVector {
+        const columnApi: VectorApi = {
+          n: matrixApi.r,
+        }
+        for (let i = 0; i < matrixApi.r; i++) {
+          const _i = i
+          Object.defineProperty(columnApi, _i, {
+            get(): number {
+              return matrixApi[_i][_j]
+            },
+            set(v: number) {
+              matrixApi[_i][_j] = v
+            },
+          })
+        }
+
+        return createVec(columnApi)
+      },
+      set(v: BaseVector) {
+        for (let i = 0; i < matrixApi.r; i++) {
+          matrixApi[i][_j] = v[i]
+        }
+      },
+    })
+  }
+
+  mat.copy = () => {
+    const newApi: MatrixApi = { r: matrixApi.r, c: matrixApi.c }
+    for (let i = 0; i < matrixApi.r; i++) {
+      newApi[i] = {}
+      for (let j = 0; j < matrixApi.c; j++) {
+        newApi[i][j] = matrixApi[i][j]
+      }
+    }
+
+    return createMat(newApi)
   }
 
   return mat
@@ -112,9 +139,9 @@ const createMat = (rowsApi: Api2D) => {
 const mat =
   (rowCount: number, columnCount: number) =>
   (...args: any[]) => {
-    const rowsApi = parseArgs(rowCount, columnCount, args)
+    const api2d = parseArgs(rowCount, columnCount, args)
 
-    return createMat(rowsApi)
+    return createMat(api2d)
   }
 
 export const mat2 = mat(2, 2) as any as (...args: MatCreateArgs<2, 2>) => Mat2

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mat2, vec2 } from '../dist'
+import { mat2, mat2x3, vec2, vec3 } from '../dist'
 
 const r = () => Math.random()
 
@@ -25,6 +25,17 @@ describe('mat', () => {
     expect(m[0][1]).toEqual(-5)
     expect(m[1][0]).toEqual(-2)
     expect(m[1][1]).toEqual(14)
+  })
+
+  it('read rowApi and columnApi', () => {
+    let m = mat2x3(vec3(7), vec3(2, 4, 1))
+
+    expect([...m[0]]).toEqual([7, 7, 7])
+    expect([...m[1]]).toEqual([2, 4, 1])
+
+    expect([...m.columns[0]]).toEqual([7, 2])
+    expect([...m.columns[1]]).toEqual([7, 4])
+    expect([...m.columns[2]]).toEqual([7, 1])
   })
 })
 
