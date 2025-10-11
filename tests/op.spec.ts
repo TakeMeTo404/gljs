@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cross, distance, dot, length, vec2, vec3, vec4 } from '../dist'
+import { cross, distance, dot, length, normalize, vec2, vec3, vec4 } from '../dist'
 
 describe('op', () => {
   it('length', () => {
@@ -30,4 +30,15 @@ describe('op', () => {
   it('cross', () => {
     expect([...cross(vec3(1, 2, 3), vec3(4, 5, 6))]).toEqual([-3, 6, -3])
   })
+
+  it('normalize', () => {
+    expect(normalize(Math.random() * 100)).toBe(1)
+
+    expect([...normalize(vec2(7, 0))]).toEqual([1, 0])
+    expect([...normalize(vec3(0, 0, -5))]).toEqual([0, 0, -1])
+
+    expect([...normalize(vec2(3, -4))]).toEqual([3 / 5, -4 / 5])
+  })
+
+
 })
