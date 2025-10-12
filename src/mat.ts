@@ -12,7 +12,7 @@ import type {
 } from './types/mat'
 import { BaseVector, createVec, VectorApi } from './vec'
 
-type MatrixApi = {
+export type MatrixApi = {
   r: number
   c: number
 } & Record<number, Record<number, number>>
@@ -47,7 +47,7 @@ const parseArgs = (rowCount: number, columnCount: number, args: any[]) => {
   return api2d
 }
 
-type BaseMatrix = {
+export type BaseMatrix = {
   _api: MatrixApi
 
   copy: () => BaseMatrix
@@ -55,7 +55,7 @@ type BaseMatrix = {
   columns: Record<number, BaseVector>
 } & Record<number, BaseVector>
 
-const createMat = (matrixApi: MatrixApi) => {
+export const createMat = (matrixApi: MatrixApi) => {
   const mat: BaseMatrix = ((
     op: string,
     other: number | BaseVector | BaseMatrix,

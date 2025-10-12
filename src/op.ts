@@ -1,7 +1,47 @@
+import { BaseMatrix, createMat, MatrixApi } from './mat'
+import {
+  Mat2,
+  Mat2x3,
+  Mat2x4,
+  Mat3,
+  Mat3x2,
+  Mat3x4,
+  Mat4,
+  Mat4x2,
+  Mat4x3,
+  MatRxC,
+} from './types/mat'
 import { Vec2, Vec3, Vec4 } from './types/vec'
 import { BaseVector, createVec, VectorApi } from './vec'
 
 type _<T extends number | Vec2 | Vec3 | Vec4> = T extends number ? number : T
+
+type VecSize<V extends Vec2 | Vec3 | Vec4> = V extends Vec2
+  ? 2
+  : V extends Vec3
+    ? 3
+    : V extends Vec4
+      ? 4
+      : never
+
+type RowsCount<M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4> =
+  M extends Mat2 | Mat2x3 | Mat2x4
+    ? 2
+    : M extends Mat3 | Mat3x2 | Mat3x4
+      ? 3
+      : M extends Mat4 | Mat4x2 | Mat4x3
+        ? 4
+        : never
+
+type ColumnsCount<
+  M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4,
+> = M extends Mat2 | Mat3x2 | Mat4x2
+  ? 2
+  : M extends Mat3 | Mat2x3 | Mat4x3
+    ? 3
+    : M extends Mat2x4 | Mat3x4 | Mat4
+      ? 4
+      : never
 
 const createUnaryOperator = (f: (x: number) => number) => {
   return ((x: number | BaseVector): number | BaseVector => {
@@ -217,7 +257,7 @@ export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
   return createVec(newApi)
 }) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<V>) => _<V>
 
-export const refract = (I: number | BaseVector, N: number | BaseVector, eta: number) => {
+export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: number) => {
   const d = dot(I as any, N as any)
   const k: number = 1 - eta * eta * (1 - d * d)
 
@@ -250,4 +290,75 @@ export const refract = (I: number | BaseVector, N: number | BaseVector, eta: num
       return createVec(newApi)
     }
   }
-}
+}) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<_<V>>, eta: number) => _<V>
+
+export const outerProduct = ((a: BaseVector, b: BaseVector): BaseMatrix => {
+  const api: MatrixApi = {
+    r: a._api.n,
+    c: b._api.n,
+  }
+
+  for (let i = 0; i < api.r; i++) {
+    api[i] = {}
+
+    for (let j = 0; j < api.c; j++) {
+      api[i][j] = a[i] * b[j]
+    }
+  }
+
+  return createMat(api)
+}) as unknown as <A extends Vec2 | Vec3 | Vec4, B extends Vec2 | Vec3 | Vec4>(
+  a: A,
+  b: B,
+) => MatRxC<VecSize<A>, VecSize<B>>
+
+export const transpose = ((mat: BaseMatrix): BaseMatrix => {
+  const api: MatrixApi = {
+    r: mat._api.c,
+    c: mat._api.r,
+  }
+
+  for (let i = 0; i < api.r; i++) {
+    api[i] = {}
+
+    for (let j = 0; j < api.c; j++) {
+      api[i][j] = mat._api[j][i]
+    }
+  }
+
+  return createMat(api)
+}) as unknown as <
+  M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4,
+>(
+  mat: M,
+) => MatRxC<ColumnsCount<M>, RowsCount<M>>
+
+export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
+  const api: MatrixApi = {
+    r: x._api.r,
+    c: x._api.c,
+  }
+
+  for (let i = 0; i < api.r; i++) {
+    api[i] = {}
+
+    for (let j = 0; j < api.c; j++) {
+      api[i][j] = x[i][j] * y[i][j]
+    }
+  }
+
+  return createMat(api)
+}) as unknown as <
+  M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4,
+>(
+  x: M,
+  y: NoInfer<M>,
+) => M
+
+export const determinant = ((mat: BaseMatrix): number => {
+  throw new Error('not implemented')
+}) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => number
+
+export const inverse = ((mat: BaseMatrix): BaseMatrix => {
+  throw new Error('not implemented')
+}) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => M
