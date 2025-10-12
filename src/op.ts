@@ -3,75 +3,6 @@ import { BaseVector, createVec, VectorApi } from './vec'
 
 type _<T extends number | Vec2 | Vec3 | Vec4> = T extends number ? number : T
 
-export const length = ((v: number | BaseVector) => {
-  if (typeof v === 'number') {
-    return v
-  }
-
-  let sum = 0
-  for (let i = 0; i < v._api.n; i++) {
-    sum += v._api[i] * v._api[i]
-  }
-
-  return Math.sqrt(sum)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => number
-
-export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
-  if (typeof x === 'number') {
-    return Math.abs((y as number) - x)
-  }
-
-  let sum = 0
-  for (let i = 0; i < x._api.n; i++) {
-    sum += (x._api[i] - (y as BaseVector)._api[i]) * (x._api[i] - (y as BaseVector)._api[i])
-  }
-
-  return Math.sqrt(sum)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
-
-export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
-  if (typeof x === 'number') {
-    return x * (y as number)
-  }
-
-  let sum = 0
-  for (let i = 0; i < x._api.n; i++) {
-    sum += x._api[i] * (y as BaseVector)._api[i]
-  }
-
-  return sum
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
-
-export const cross = (a: Vec3, b: Vec3): Vec3 => {
-  const api: VectorApi = {
-    n: 3,
-  }
-
-  ;(api[0] = a[1] * b[2] - a[2] * b[1]),
-    (api[1] = a[2] * b[0] - a[0] * b[2]),
-    (api[2] = a[0] * b[1] - a[1] * b[0])
-
-  return createVec(api) as unknown as Vec3
-}
-
-export const normalize = ((v: number | BaseVector) => {
-  if (typeof v === 'number') {
-    return v / Math.abs(v)
-  }
-
-  const l = length(v as any)
-
-  const newApi: VectorApi = {
-    n: v._api.n,
-  }
-
-  for (let i = 0; i < v._api.n; i++) {
-    newApi[i] = v._api[i] / l
-  }
-
-  return createVec(newApi)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => _<V>
-
 const createUnaryOperator = (f: (x: number) => number) => {
   return ((x: number | BaseVector): number | BaseVector => {
     if (typeof x === 'number') {
@@ -92,6 +23,7 @@ const createUnaryOperator = (f: (x: number) => number) => {
 
 export const exp = createUnaryOperator(Math.exp)
 export const sqrt = createUnaryOperator(Math.sqrt)
+export const inversesqrt = createUnaryOperator((x) => 1 / Math.sqrt(x))
 export const log = createUnaryOperator(Math.log)
 export const exp2 = createUnaryOperator((a) => 2 ** a)
 export const log2 = createUnaryOperator(Math.log2)
@@ -99,6 +31,7 @@ export const abs = createUnaryOperator(Math.abs)
 export const sign = createUnaryOperator(Math.sign)
 export const floor = createUnaryOperator(Math.floor)
 export const ceil = createUnaryOperator(Math.ceil)
+export const round = createUnaryOperator(Math.round)
 export const fract = createUnaryOperator((x) => x - Math.floor(x))
 export const trunc = createUnaryOperator(Math.trunc)
 
@@ -172,3 +105,149 @@ export const smoothstep = createTernaryOperator((edge0, edge1, x) => {
   const t = _clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
   return t * t * (3.0 - 2.0 * t)
 })
+
+export const length = ((v: number | BaseVector) => {
+  if (typeof v === 'number') {
+    return v
+  }
+
+  let sum = 0
+  for (let i = 0; i < v._api.n; i++) {
+    sum += v._api[i] * v._api[i]
+  }
+
+  return Math.sqrt(sum)
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => number
+
+export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
+  if (typeof x === 'number') {
+    return Math.abs((y as number) - x)
+  }
+
+  let sum = 0
+  for (let i = 0; i < x._api.n; i++) {
+    sum += (x._api[i] - (y as BaseVector)._api[i]) * (x._api[i] - (y as BaseVector)._api[i])
+  }
+
+  return Math.sqrt(sum)
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
+
+export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
+  if (typeof x === 'number') {
+    return x * (y as number)
+  }
+
+  let sum = 0
+  for (let i = 0; i < x._api.n; i++) {
+    sum += x._api[i] * (y as BaseVector)._api[i]
+  }
+
+  return sum
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
+
+export const cross = (a: Vec3, b: Vec3): Vec3 => {
+  const api: VectorApi = {
+    n: 3,
+  }
+
+  ;(api[0] = a[1] * b[2] - a[2] * b[1]),
+    (api[1] = a[2] * b[0] - a[0] * b[2]),
+    (api[2] = a[0] * b[1] - a[1] * b[0])
+
+  return createVec(api) as unknown as Vec3
+}
+
+export const normalize = ((v: number | BaseVector) => {
+  if (typeof v === 'number') {
+    return v / Math.abs(v)
+  }
+
+  const l = length(v as any)
+
+  const newApi: VectorApi = {
+    n: v._api.n,
+  }
+
+  for (let i = 0; i < v._api.n; i++) {
+    newApi[i] = v._api[i] / l
+  }
+
+  return createVec(newApi)
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => _<V>
+
+export const faceforward = ((
+  N: number | BaseVector,
+  I: number | BaseVector,
+  Nref: number | BaseVector,
+) => {
+  if (dot(I as any, Nref as any) < 0) {
+    return N
+  } else {
+    if (typeof N === 'number') {
+      return -N
+    }
+
+    const newApi: VectorApi = {
+      n: N._api.n,
+    }
+
+    for (let i = 0; i < newApi.n; i++) {
+      newApi[i] = -N._api[i]
+    }
+
+    return createVec(newApi)
+  }
+}) as <V extends number | Vec2 | Vec3 | Vec4>(N: _<V>, I: NoInfer<V>, Nref: NoInfer<V>) => _<V>
+
+export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
+  if (typeof I === 'number') {
+    return I - 2 * (N as number) * I * (N as number)
+  }
+
+  const d = dot(I as any, N as any)
+
+  const newApi: VectorApi = {
+    n: I._api.n,
+  }
+
+  for (let i = 0; i < newApi.n; i++) {
+    newApi[i] = I[i] - 2 * d * (N as BaseVector)[i]
+  }
+
+  return createVec(newApi)
+}) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<V>) => _<V>
+
+export const refract = (I: number | BaseVector, N: number | BaseVector, eta: number) => {
+  const d = dot(I as any, N as any)
+  const k: number = 1 - eta * eta * (1 - d * d)
+
+  if (k < 0) {
+    if (typeof I === 'number') {
+      return 0
+    } else {
+      const newApi: VectorApi = {
+        n: I._api.n,
+      }
+
+      for (let i = 0; i < newApi.n; i++) {
+        newApi[i] = 0
+      }
+
+      return createVec(newApi)
+    }
+  } else {
+    if (typeof I === 'number') {
+      return eta * I - (eta * d + Math.sqrt(k)) * (N as number)
+    } else {
+      const newApi: VectorApi = {
+        n: I._api.n,
+      }
+
+      for (let i = 0; i < newApi.n; i++) {
+        newApi[i] = eta * I[i] - (eta * d + Math.sqrt(k)) * (N as BaseVector)[i]
+      }
+
+      return createVec(newApi)
+    }
+  }
+}
