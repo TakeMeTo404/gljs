@@ -7,46 +7,31 @@ describe('vec', () => {
     const y = Math.random()
     expect([...vec2(x)]).toEqual([x, x])
     expect([...vec2(x, y)]).toEqual([x, y])
+    expect([...vec2(vec2(y, x))]).toEqual([y, x])
 
-    expect([...vec2({ x, y })]).toEqual([x, y])
-    const [r, g] = [Math.random(), Math.random()]
-    expect([...vec2({ r, g })]).toEqual([r, g])
-
-    const [z, w] = [Math.random(), Math.random()]
-    expect([...vec2(vec2(x, y))]).toEqual([x, y])
-
-    expect([...vec2([x, y])]).toEqual([x, y])
     // @ts-expect-error
-    expect([...vec2([])]).toEqual([undefined, undefined])
+    expect(() => vec2()).toThrowError('Cannot create Vec2')
     // @ts-expect-error
-    expect([...vec2([x])]).toEqual([x, undefined])
+    expect(() => vec2([1, 2])).toThrowError()
     // @ts-expect-error
-    expect([...vec2([x, y, z])]).toEqual([x, y])
+    expect(() => vec2(2, 3, 4)).toThrowError('Cannot create Vec2')
+    // @ts-expect-error
+    expect(() => vec2(vec3(1))).toThrowError('Cannot create Vec2')
+    // @ts-expect-error
+    expect(() => vec2(vec2(1), 1)).toThrowError('Cannot create Vec2')
+    // @ts-expect-error
+    expect(() => vec2(vec2(1), null)).toThrowError()
   })
 
   it('create vec3', () => {
-    const [x, y, z, w] = [Math.random(), Math.random(), Math.random(), Math.random()]
+    const [x, y, z] = [Math.random(), Math.random(), Math.random()]
 
     expect([...vec3(x)]).toEqual([x, x, x])
     expect([...vec3(x, y, z)]).toEqual([x, y, z])
 
-    expect([...vec3({ x, y, z })]).toEqual([x, y, z])
-    const [r, g, b] = [Math.random(), Math.random(), Math.random()]
-    expect([...vec3({ r, g, b })]).toEqual([r, g, b])
-
     expect([...vec3(vec3(x, y, z))]).toEqual([x, y, z])
     expect([...vec3(vec2(x, y), z)]).toEqual([x, y, z])
     expect([...vec3(x, vec2(y, z))]).toEqual([x, y, z])
-
-    expect([...vec3([x, y, z])]).toEqual([x, y, z])
-    // @ts-expect-error
-    expect([...vec3([])]).toEqual([undefined, undefined, undefined])
-    // @ts-expect-error
-    expect([...vec3([x])]).toEqual([x, undefined, undefined])
-    // @ts-expect-error
-    expect([...vec3([x, y])]).toEqual([x, y, undefined])
-    // @ts-expect-error
-    expect([...vec3([x, y, z, w])]).toEqual([x, y, z])
   })
 
   it('create vec4', () => {
@@ -54,10 +39,6 @@ describe('vec', () => {
 
     expect([...vec4(x)]).toEqual([x, x, x, x])
     expect([...vec4(x, y, z, w)]).toEqual([x, y, z, w])
-
-    expect([...vec4({ x, y, z, w })]).toEqual([x, y, z, w])
-    const [r, g, b, a] = [Math.random(), Math.random(), Math.random(), Math.random()]
-    expect([...vec4({ r, g, b, a })]).toEqual([r, g, b, a])
 
     expect([...vec4(vec4(x, y, z, w))]).toEqual([x, y, z, w])
 
@@ -68,17 +49,7 @@ describe('vec', () => {
     expect([...vec4(x, vec2(y, z), w)]).toEqual([x, y, z, w])
     expect([...vec4(x, y, vec2(z, w))]).toEqual([x, y, z, w])
 
-    expect([...vec4([x, y, z, w])]).toEqual([x, y, z, w])
-    // @ts-expect-error
-    expect([...vec4([])]).toEqual([undefined, undefined, undefined, undefined])
-    // @ts-expect-error
-    expect([...vec4([x])]).toEqual([x, undefined, undefined, undefined])
-    // @ts-expect-error
-    expect([...vec4([x, y])]).toEqual([x, y, undefined, undefined])
-    // @ts-expect-error
-    expect([...vec4([x, y, z])]).toEqual([x, y, z, undefined])
-    // @ts-expect-error
-    expect([...vec4([x, y, z, w, Math.random()])]).toEqual([x, y, z, w])
+    expect([...vec4(vec2(x, y), vec2(z, w))]).toEqual([x, y, z, w])
   })
 
   it('index properties', () => {

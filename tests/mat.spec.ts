@@ -1,31 +1,33 @@
 import { describe, it, expect } from 'vitest'
-import { Mat2, mat2, mat2x3, vec2, vec3 } from '../dist'
+import { Mat2, mat2, mat2x3, mat4x3, Vec2, vec2, vec3, vec4 } from '../dist'
 import { matrixToArray } from './utils'
-
-const r = () => Math.random()
 
 describe('mat', () => {
   it('create mat2', () => {
-    const row1 = vec2(r(), r())
-    const row2 = vec2(r(), r())
+    expect(matrixToArray(mat2(1, 2, 3, 4))).toEqual([1, 2, 3, 4])
 
-    let m = mat2(row1, row2)
-    expect(m[0][0]).toEqual(row1[0])
-    expect(m[0][1]).toEqual(row1[1])
-    expect(m[1][0]).toEqual(row2[0])
-    expect(m[1][1]).toEqual(row2[1])
+    expect(matrixToArray(mat2(vec2(1, 2), 3, 4))).toEqual([1, 2, 3, 4])
 
-    m = mat2(7)
-    expect(m[0][0]).toEqual(7)
-    expect(m[0][1]).toEqual(0)
-    expect(m[1][0]).toEqual(0)
-    expect(m[1][1]).toEqual(7)
+    expect(matrixToArray(mat2(vec2(1, 2), vec2(3, 4)))).toEqual([1, 2, 3, 4])
 
-    m = mat2([10, -5], [-2, 14])
-    expect(m[0][0]).toEqual(10)
-    expect(m[0][1]).toEqual(-5)
-    expect(m[1][0]).toEqual(-2)
-    expect(m[1][1]).toEqual(14)
+    expect(matrixToArray(mat2(vec3(1, 2, 3), 4))).toEqual([1, 2, 3, 4])
+
+    expect(matrixToArray(mat2(1, vec3(2, 3, 4)))).toEqual([1, 2, 3, 4])
+
+    expect(matrixToArray(mat2(vec4(1, 2, 3, 4)))).toEqual([1, 2, 3, 4])
+
+    const arr: number[] = [1, 2, 3, 4]
+    expect(matrixToArray(mat2(...arr))).toEqual([1, 2, 3, 4])
+
+    const strange: (number | Vec2)[] = [1, vec2(2, 3), 4]
+
+    expect(matrixToArray(mat2(...strange))).toEqual([1, 2, 3, 4])
+  })
+
+  it('create mat4x3', () => {
+    expect(matrixToArray(mat4x3(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+    ])
   })
 
   it('read rowApi and columnApi', () => {
@@ -43,11 +45,5 @@ describe('mat', () => {
     expect(matrixToArray(mat2(3))).toEqual([3, 0, 0, 3])
 
     expect(matrixToArray(mat2(2)('+', 7))).toEqual([9, 7, 7, 9])
-
-    // expect(toArray(mat2(2)('+', 7))).toEqual([9, 0, 0, 9])
   })
 })
-
-// mat2(1) ✅
-// mat2(...number[]) ✅
-// mat2(1, 2, 3, 4) ⛔️

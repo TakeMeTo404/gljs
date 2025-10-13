@@ -20,104 +20,24 @@ export type VectorApi = {
   n: number
 } & Record<number, number>
 
-const parseArgs = (n: number, args: any[]): VectorApi => {
-  const api: VectorApi = {
-    n,
-  }
+export const isVector = (v: unknown): v is BaseVector => {
+  return Boolean(v) && typeof v === 'function' && typeof (v as any)._api.n === 'number'
+}
 
-  // repeat one scalar
-  if (args.length === 1 && typeof args[0] === 'number') {
-    for (let i = 0; i < n; i++) api[i] = args[0]
-    return api
-  }
+export const parseArgsToApi = (args: unknown[]): VectorApi => {
+  const api: VectorApi = { n: 0 }
 
-  // given N args – N scalars
-  if (args.length === n) {
-    for (let i = 0; i < n; i++) api[i] = args[i] as number
-    return api
-  }
-
-  // given 1 arg – array of N scalars
-  if (Array.isArray(args[0])) {
-    for (let i = 0; i < n; i++) api[i] = args[0][i]
-    return api
-  }
-
-  if (typeof args[0] === 'object' && 'x' in args[0]) {
-    for (let i = 0; i < n; i++) {
-      api[i] = args[0][xyzw[i]]
-    }
-    return api
-  }
-  if (typeof args[0] === 'object' && 'r' in args[0]) {
-    for (let i = 0; i < n; i++) api[i] = args[0][rgba[i]]
-    return api
-  }
-
-  if (n === 2) {
-    // now we assume args = [Vec2]
-    api[0] = args[0][0]
-    api[1] = args[0][1]
-  } else if (n === 3) {
-    if (args.length === 1) {
-      // args: [Vec3]
-      api[0] = args[0][0]
-      api[1] = args[0][1]
-      api[2] = args[0][2]
-    } else {
-      if (typeof args[0] === 'number') {
-        // args: [number, Vec2]
-        api[0] = args[0]
-        api[1] = args[1][0]
-        api[2] = args[1][1]
-      } else {
-        // args: [Vec2, number]
-        api[0] = args[0][0]
-        api[1] = args[0][1]
-        api[2] = args[1]
-      }
-    }
-  } else {
-    if (args.length === 1) {
-      // args: [Vec4]
-      api[0] = args[0][0]
-      api[1] = args[0][1]
-      api[2] = args[0][2]
-      api[3] = args[0][3]
-    } else if (args.length === 2) {
-      if (typeof args[0] === 'number') {
-        // args: [number, Vec3]
-        api[0] = args[0]
-        api[1] = args[1][0]
-        api[2] = args[1][1]
-        api[3] = args[1][2]
-      } else {
-        // args: [Vec3, number]
-        api[0] = args[0][0]
-        api[1] = args[0][1]
-        api[2] = args[0][2]
-        api[3] = args[1]
+  for (const arg of args) {
+    if (typeof arg === 'number') {
+      api[api.n] = arg
+      api.n++
+    } else if (isVector(arg)) {
+      for (let i = 0; i < arg._api.n; i++) {
+        api[api.n] = arg[i]
+        api.n++
       }
     } else {
-      if (typeof args[0] !== 'number') {
-        // args: [Vec2, number, number]
-        api[0] = args[0][0]
-        api[1] = args[0][1]
-        api[2] = args[1]
-        api[3] = args[2]
-      } else if (typeof args[1] !== 'number') {
-        // args: [number, Vec2, number]
-        api[0] = args[0]
-        api[1] = args[1][0]
-        api[2] = args[1][1]
-        api[3] = args[2]
-      } else {
-        // args: [number, number, Vec2]
-        api[0] = args[0]
-        api[1] = args[1]
-        api[2] = args[2][0]
-        api[3] = args[2][1]
-      }
+      throw new Error('Vector and matrix constructors accept only numbers and other vectors')
     }
   }
 
@@ -217,9 +137,22 @@ export const createVec = (api: VectorApi) => {
 const vec =
   (n: number) =>
   (...args: any[]) => {
-    const api = parseArgs(n, args)
+    if (args.length === 1 && typeof args[0] === 'number') {
+      const api: VectorApi = { n }
+      for (let i = 0; i < n; i++) {
+        api[i] = args[0]
+      }
 
-    return createVec(api)
+      return createVec(api)
+    } else {
+      const api = parseArgsToApi(args)
+
+      if (api.n !== n) {
+        throw new Error(`Cannot create Vec${n}. Need ${n} components, but given ${api.n}`)
+      }
+
+      return createVec(api)
+    }
   }
 
 export const vec2 = vec(2) as any as (...args: Vec2CreateArgs) => Vec2

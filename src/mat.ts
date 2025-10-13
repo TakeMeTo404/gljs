@@ -11,41 +11,27 @@ import type {
   Mat4x3,
   MatCreateArgs,
 } from './types/mat'
-import { BaseVector, createVec, VectorApi } from './vec'
+import { BaseVector, createVec, parseArgsToApi, VectorApi } from './vec'
 
 export type MatrixApi = {
   r: number
   c: number
 } & Record<number, Record<number, number>>
 
-const parseArgs = (rowCount: number, columnCount: number, args: any[]) => {
-  const api2d: MatrixApi = {
+const createZeroApi = (rowCount: number, columnCount: number): MatrixApi => {
+  const api: MatrixApi = {
     r: rowCount,
     c: columnCount,
   }
 
   for (let i = 0; i < rowCount; i++) {
-    api2d[i] = {}
+    api[i] = {}
     for (let j = 0; j < columnCount; j++) {
-      api2d[i][j] = 0
+      api[i][j] = 0
     }
   }
 
-  if (args.length === 1 && typeof args[0] === 'number') {
-    const min = Math.min(rowCount, columnCount)
-    for (let i = 0; i < min; i++) {
-      api2d[i][i] = args[0]
-    }
-  } else {
-    for (let i = 0; i < rowCount; i++) {
-      for (let j = 0; j < columnCount; j++) {
-        // args[i] is arr or vec. Anyway, indexible via 0, 1, ..., c-1
-        api2d[i][j] = args[i][j]
-      }
-    }
-  }
-
-  return api2d
+  return api
 }
 
 export type BaseMatrix = {
@@ -55,6 +41,10 @@ export type BaseMatrix = {
 
   columns: Record<number, BaseVector>
 } & Record<number, BaseVector>
+
+const isMatrix = (v: unknown): v is BaseMatrix => {
+  return Boolean(v) && typeof v === 'function' && typeof (v as any)._api.r === 'number'
+}
 
 export const createMat = (matrixApi: MatrixApi) => {
   const mat: BaseMatrix = ((op: string, other: number | BaseVector | BaseMatrix) => {
@@ -196,20 +186,68 @@ export const createMat = (matrixApi: MatrixApi) => {
 const mat =
   (rowCount: number, columnCount: number) =>
   (...args: any[]) => {
-    const api2d = parseArgs(rowCount, columnCount, args)
+    if (args.length === 1 && typeof args[0] === 'number') {
+      const api = createZeroApi(rowCount, columnCount)
 
-    return createMat(api2d)
+      for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
+        api[i - 1][i - 1] = args[0]
+      }
+
+      return createMat(api)
+    } else if (args.length === 1 && isMatrix(args[0])) {
+      throw new Error('Not implemented matrix create from matrix yet')
+    } else {
+      const argsVectorApi = parseArgsToApi(args)
+
+      if (argsVectorApi.n !== rowCount * columnCount) {
+        throw new Error(
+          `Cannot create Mat${rowCount}x${columnCount}. Need ${rowCount * columnCount} components, but given ${argsVectorApi.n}`,
+        )
+      }
+
+      const api: MatrixApi = {
+        r: rowCount,
+        c: columnCount,
+      }
+
+      for (let i = 0; i < rowCount; i++) {
+        api[i] = {}
+        for (let j = 0; j < columnCount; j++) {
+          api[i][j] = argsVectorApi[i * columnCount + j]
+        }
+      }
+
+      return createMat(api)
+    }
   }
 
-export const mat2 = mat(2, 2) as any as (...args: MatCreateArgs<2, 2>) => Mat2
-export const mat3 = mat(3, 3) as any as (...args: MatCreateArgs<3, 3>) => Mat3
-export const mat4 = mat(4, 4) as any as (...args: MatCreateArgs<4, 4>) => Mat4
+export const mat2 = mat(2, 2) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<2, 2, Args>
+) => Mat2
+export const mat3 = mat(3, 3) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<3, 3, Args>
+) => Mat3
+export const mat4 = mat(4, 4) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<4, 4, Args>
+) => Mat4
 
-export const mat2x3 = mat(2, 3) as any as (...args: MatCreateArgs<2, 3>) => Mat2x3
-export const mat3x2 = mat(3, 2) as any as (...args: MatCreateArgs<3, 2>) => Mat3x2
+export const mat2x3 = mat(2, 3) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<2, 3, Args>
+) => Mat2x3
+export const mat3x2 = mat(3, 2) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<3, 2, Args>
+) => Mat3x2
 
-export const mat2x4 = mat(2, 4) as any as (...args: MatCreateArgs<2, 4>) => Mat2x4
-export const mat4x2 = mat(4, 2) as any as (...args: MatCreateArgs<4, 2>) => Mat4x2
+export const mat2x4 = mat(2, 4) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<2, 4, Args>
+) => Mat2x4
+export const mat4x2 = mat(4, 2) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<4, 2, Args>
+) => Mat4x2
 
-export const mat3x4 = mat(3, 4) as any as (...args: MatCreateArgs<3, 4>) => Mat3x4
-export const mat4x3 = mat(4, 3) as any as (...args: MatCreateArgs<4, 3>) => Mat4x3
+export const mat3x4 = mat(3, 4) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<3, 4, Args>
+) => Mat3x4
+export const mat4x3 = mat(4, 3) as any as <Args extends unknown[]>(
+  ...args: MatCreateArgs<4, 3, Args>
+) => Mat4x3
