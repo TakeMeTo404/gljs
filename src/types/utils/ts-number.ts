@@ -26,5 +26,3 @@ export type Sum<A extends number, B extends number> = A extends 0 | 1 | 2 | 3 | 
     ? [...NumbersZeroToN<A>, ...NumbersZeroToN<B>]['length']
     : never
   : never
-
-export {}

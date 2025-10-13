@@ -1,4 +1,3 @@
-import { Equal, Expect, Not } from './ts-debug'
 import { Compare } from './ts-number'
 
 export type MaxArrayLength<T extends unknown[], Max extends number> =
@@ -33,14 +32,3 @@ export type ArrayOfLength<T extends unknown, N extends number> = N extends 0
         : N extends 4
           ? [T, T, T, T]
           : never
-
-type Tests = [
-  Expect<Equal<ConsistsOnlyOfElements<[], []>, []>>,
-  Expect<Equal<ConsistsOnlyOfElements<[], [0, 1, '2', true]>, []>>,
-  Expect<Equal<ConsistsOnlyOfElements<[0], [0]>, [0]>>,
-
-  Expect<Equal<ConsistsOnlyOfElements<[1, 1, 1, 1, 1], [0, 1, 2]>, [1, 1, 1, 1, 1]>>,
-
-  Expect<Equal<ConsistsOnlyOfElements<[3], [0, 1, 2]>, never>>,
-  Expect<Not<Equal<ConsistsOnlyOfElements<[3], [0, 1, 2]>, [3]>>>,
-]

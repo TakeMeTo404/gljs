@@ -1,3 +1,4 @@
+import { operations } from './const'
 import type { Vec2, Vec2CreateArgs, Vec3, Vec3CreateArgs, Vec4, Vec4CreateArgs } from './types/vec'
 
 const xyzw: string[] = ['x', 'y', 'z', 'w']
@@ -13,13 +14,6 @@ const selectionIndexMap: Record<string, number> = {
   g: 1,
   b: 2,
   a: 3,
-}
-
-const operations: Record<string, (a: number, b: number) => number> = {
-  '+': (a, b) => a + b,
-  '-': (a, b) => a - b,
-  '*': (a, b) => a * b,
-  '/': (a, b) => a / b,
 }
 
 export type VectorApi = {

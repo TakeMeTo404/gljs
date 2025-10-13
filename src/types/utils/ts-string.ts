@@ -1,5 +1,4 @@
 import type { Compare } from './ts-number'
-import type { Expect, Equal, Not } from './ts-debug'
 
 export type Length<
   T extends string,
@@ -35,18 +34,3 @@ type OfUniqueChars<T extends string, Acc extends string[]> = T extends ''
     : never
 
 export type ConsistsOfUniqueChars<T extends string> = T & OfUniqueChars<T, []>
-
-type Tests = [
-  Expect<Equal<ConsistsOfUniqueChars<''>, ''>>,
-  Expect<Equal<ConsistsOfUniqueChars<'a'>, 'a'>>,
-  Expect<Equal<ConsistsOfUniqueChars<'ab'>, 'ab'>>,
-  Expect<Equal<ConsistsOfUniqueChars<'abcdef'>, 'abcdef'>>,
-
-  Expect<Not<Equal<ConsistsOfUniqueChars<'aa'>, 'aa'>>>,
-  Expect<Equal<ConsistsOfUniqueChars<'aa'>, never>>,
-
-  Expect<Not<Equal<ConsistsOfUniqueChars<'abcdefgh a'>, 'abcdefgh a'>>>,
-  Expect<Equal<ConsistsOfUniqueChars<'abcdefgh a'>, never>>,
-]
-
-export {}

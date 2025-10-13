@@ -12,5 +12,3 @@ export type Equal<T, U> =
     : false
 
 export type Assignable<T, U> = T extends U ? true : false
-
-export {}

@@ -1,3 +1,4 @@
+import { operations } from './const'
 import type {
   Mat2,
   Mat3,
@@ -56,10 +57,66 @@ export type BaseMatrix = {
 } & Record<number, BaseVector>
 
 export const createMat = (matrixApi: MatrixApi) => {
-  const mat: BaseMatrix = ((
-    op: string,
-    other: number | BaseVector | BaseMatrix,
-  ) => {}) as any as BaseMatrix
+  const mat: BaseMatrix = ((op: string, other: number | BaseVector | BaseMatrix) => {
+    if (op === '+' || op === '-' || op === '/' || (op === '*' && typeof other === 'number')) {
+      const getOtherAt: (i: number, j: number) => number =
+        typeof other === 'number' ? () => other : (i, j) => (other as BaseMatrix)[i][j]
+
+      const api: MatrixApi = {
+        r: matrixApi.r,
+        c: matrixApi.c,
+      }
+
+      for (let i = 0; i < matrixApi.r; i++) {
+        api[i] = {}
+
+        for (let j = 0; j < matrixApi.c; j++) {
+          api[i][j] = operations[op](matrixApi[i][j], getOtherAt(i, j))
+        }
+      }
+
+      return createMat(api)
+    } else {
+      if ((other as BaseMatrix).columns) {
+        const m = other as BaseMatrix
+
+        const api: MatrixApi = {
+          r: matrixApi.r,
+          c: m._api.c,
+        }
+
+        for (let i = 0; i < api.r; i++) {
+          api[i] = {}
+
+          for (let j = 0; j < api.c; j++) {
+            api[i][j] = 0
+
+            for (let k = 0; k < matrixApi.c; k++) {
+              api[i][j] += matrixApi[i][k] * m[k][j]
+            }
+          }
+
+          return createMat(api)
+        }
+      } else {
+        const v = other as BaseVector
+
+        const api: VectorApi = {
+          n: matrixApi.r,
+        }
+
+        for (let i = 0; i < matrixApi.r; i++) {
+          api[i] = 0
+
+          for (let j = 0; j < matrixApi.c; j++) {
+            api[i] += v[j] * matrixApi[i][j]
+          }
+        }
+
+        return createVec(api)
+      }
+    }
+  }) as any as BaseMatrix
 
   mat._api = matrixApi
 
