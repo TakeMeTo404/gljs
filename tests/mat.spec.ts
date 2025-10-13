@@ -1,24 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { Mat2, mat2, mat2x3, vec2, vec3 } from '../dist'
+import { matrixToArray } from './utils'
 
 const r = () => Math.random()
-
-const toArray = (m: any) => {
-  let result: number[] = []
-
-  let i = 0
-  while (m[i]) {
-    let j = 0
-    while (typeof m[i][j] === 'number') {
-      result.push(m[i][j])
-      j++
-    }
-
-    i++
-  }
-
-  return result
-}
 
 describe('mat', () => {
   it('create mat2', () => {
@@ -56,9 +40,9 @@ describe('mat', () => {
   })
 
   it('matcallable', () => {
-    expect(toArray(mat2(3))).toEqual([3, 0, 0, 3])
+    expect(matrixToArray(mat2(3))).toEqual([3, 0, 0, 3])
 
-    expect(toArray(mat2(2)('+', 7))).toEqual([9, 7, 7, 9])
+    expect(matrixToArray(mat2(2)('+', 7))).toEqual([9, 7, 7, 9])
 
     // expect(toArray(mat2(2)('+', 7))).toEqual([9, 0, 0, 9])
   })

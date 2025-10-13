@@ -355,10 +355,105 @@ export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
   y: NoInfer<M>,
 ) => M
 
+const _getMinor = (api: MatrixApi, row: number, column: number): MatrixApi => {
+  const minorApi: MatrixApi = {
+    r: api.r - 1,
+    c: api.c - 1,
+  }
+
+  for (let i = 0; i < api.r; i++) {
+    if (i === row) continue
+
+    const newRow: Record<number, number> = {}
+
+    for (let j = 0; j < api.r; j++) {
+      if (j === column) continue
+
+      if (j < column) {
+        newRow[j] = api[i][j]
+      } else {
+        newRow[j - 1] = api[i][j]
+      }
+    }
+
+    if (i < row) {
+      minorApi[i] = newRow
+    } else {
+      minorApi[i - 1] = newRow
+    }
+  }
+
+  return minorApi
+}
+
+const _det3 = (api: MatrixApi) => {
+  return (
+    api[0][0] * api[1][1] * api[2][2] +
+    api[0][1] * api[1][2] * api[2][0] +
+    api[0][2] * api[1][0] * api[2][1] -
+    api[0][2] * api[1][1] * api[2][0] -
+    api[0][1] * api[1][0] * api[2][2] -
+    api[0][0] * api[1][2] * api[2][1]
+  )
+}
+
+const _determinant = (api: MatrixApi): number => {
+  if (api.r === 2) {
+    return api[0][0] * api[1][1] - api[0][1] * api[1][0]
+  } else if (api.r === 3) {
+    return _det3(api)
+  } else {
+    let det = 0
+    for (let j = 0; j < 4; j++) {
+      const sign = j % 2 === 0 ? 1 : -1
+      det += sign * api[0][j] * _det3(_getMinor(api, 0, j))
+    }
+    return det
+  }
+}
+
 export const determinant = ((mat: BaseMatrix): number => {
-  throw new Error('not implemented')
+  return _determinant(mat._api)
 }) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => number
 
 export const inverse = ((mat: BaseMatrix): BaseMatrix => {
-  throw new Error('not implemented')
+  const det = _determinant(mat._api)
+
+  if (det === 0) {
+    throw new Error('Matrix is singular (determinant is 0), inverse does not exist')
+  }
+
+  if (mat._api.r === 2) {
+    const newApi: MatrixApi = {
+      r: 2,
+      c: 2,
+      0: {
+        0: mat._api[1][1] / det,
+        1: -mat._api[0][1] / det,
+      },
+      1: {
+        0: -mat._api[1][0] / det,
+        1: mat._api[0][0] / det,
+      },
+    }
+
+    return createMat(newApi)
+  }
+
+  const invApi: MatrixApi = {
+    r: mat._api.r,
+    c: mat._api.c,
+  }
+
+  for (let i = 0; i < invApi.r; i++) {
+    invApi[i] = {}
+  }
+
+  for (let i = 0; i < invApi.r; i++) {
+    for (let j = 0; j < invApi.c; j++) {
+      invApi[j][i] = (Math.pow(-1, i + j) * _determinant(_getMinor(mat._api, i, j))) / det
+    }
+  }
+
+  return createMat(invApi)
 }) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => M

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { cross, distance, dot, length, normalize, vec2, vec3, vec4 } from '../dist'
+import { cross, distance, dot, inverse, length, mat3, normalize, vec2, vec3, vec4 } from '../dist'
+import { matrixToArray } from './utils'
 
 describe('op', () => {
   it('length', () => {
@@ -40,5 +41,9 @@ describe('op', () => {
     expect([...normalize(vec2(3, -4))]).toEqual([3 / 5, -4 / 5])
   })
 
-
+  it('inverse', () => {
+    expect(matrixToArray(inverse(mat3(vec3(2, 5, 7), vec3(6, 3, 4), vec3(5, -2, -3))))).toEqual([
+      1, -1, 1, -38, 41, -34, 27, -29, 24,
+    ])
+  })
 })
