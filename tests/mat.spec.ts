@@ -176,9 +176,36 @@ describe('mat', () => {
     expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
   })
 
-  it('matcallable', () => {
-    expect(matrixToArray(mat2(3))).toEqual([3, 0, 0, 3])
-
+  it('callable', () => {
     expect(matrixToArray(mat2(2)('+', 7))).toEqual([9, 7, 7, 9])
+
+    expect(matrixToArray(mat4x2(8, 7, 6, 5, 4, 3, 2, 1)('*', -1))).toEqual([
+      -8, -7, -6, -5, -4, -3, -2, -1,
+    ])
+
+    expect(matrixToArray(mat4x2(16, 14, 12, 10, 8, 6, 4, 2)('/', 2))).toEqual([
+      8, 7, 6, 5, 4, 3, 2, 1,
+    ])
+
+    expect(matrixToArray(mat2(10, -12, 5, 6)('+', 7)('-', 7))).toEqual(
+      matrixToArray(mat2(10, -12, 5, 6)),
+    )
+
+    const m1 = mat3x2(1, 2, 3, 4, 5, 6)
+    const m2 = mat3x2(7, 7, 7, 7, 7, 7)
+    expect(matrixToArray(m1('+', m2))).toEqual([8, 9, 10, 11, 12, 13])
+
+    expect(matrixToArray(m2('-', m1)('+', m1)('-', m1))).toEqual([6, 5, 4, 3, 2, 1])
+
+    expect(matrixToArray(m1('-', m1)('+', 2)('/', m2))).toEqual([
+      2 / 7,
+      2 / 7,
+      2 / 7,
+      2 / 7,
+      2 / 7,
+      2 / 7,
+    ])
+
+    // TODO: matrix multiplication tests
   })
 })
