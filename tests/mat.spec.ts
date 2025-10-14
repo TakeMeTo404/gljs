@@ -17,71 +17,18 @@ import {
   Vec4,
   vec4,
 } from '../dist'
-import { matrixToArray } from './utils'
-import { memoize, sampleSize } from 'lodash'
-
-const mat: Record<number, Record<number, (...args: any[]) => any>> = {
-  2: {
-    2: mat2,
-    3: mat2x3,
-    4: mat2x4,
-  },
-  3: {
-    2: mat3x2,
-    3: mat3,
-    4: mat3x4,
-  },
-  4: {
-    2: mat4x2,
-    3: mat4x3,
-    4: mat4,
-  },
-}
-
-const createVec = (n: number, args: number[]) => {
-  switch (n) {
-    case 1:
-      return args[0]
-    case 2:
-      return vec2(...args)
-    case 3:
-      return vec3(...args)
-    case 4:
-      return vec4(...args)
-    default:
-      throw new Error()
-  }
-}
-
-const findSequences = memoize(function findSequences(N: number): number[][] {
-  const result: number[][] = []
-  const path: number[] = []
-
-  function backdrop(sum: number) {
-    if (sum === N) {
-      result.push([...path])
-      return
-    }
-
-    for (let i = 1; i <= 4; i++) {
-      if (sum + i <= N) {
-        path.push(i)
-        backdrop(sum + i)
-        path.pop()
-      }
-    }
-  }
-
-  backdrop(0)
-  return result
-})
+import {
+  createMatFromDistribution,
+  createVec,
+  distribute,
+  findSequences,
+  matrixToArray,
+  matRxC,
+} from './utils'
+import { memoize, random, repeat, sampleSize, times } from 'lodash'
 
 describe('mat', () => {
-  it('hahaha', () => {
-    console.log(findSequences(16).length)
-  })
-
-  it('create mat2', () => {
+  it('create', () => {
     expect(matrixToArray(mat2(1, 2, 3, 4))).toEqual([1, 2, 3, 4])
 
     expect(matrixToArray(mat2(vec2(1, 2), 3, 4))).toEqual([1, 2, 3, 4])
@@ -100,72 +47,133 @@ describe('mat', () => {
     const strange: (number | Vec2)[] = [1, vec2(2, 3), 4]
 
     expect(matrixToArray(mat2(...strange))).toEqual([1, 2, 3, 4])
-  })
 
-  it('create mat4x3', () => {
     expect(matrixToArray(mat4x3(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
     ])
-  })
 
-  it('create from components', () => {
-
-    function createMatrixFromSeq(r: number, c: number, seq: number[], values: number[]) {
-      const matrixConstructorArgs: (number | Vec2 | Vec3 | Vec4)[] = []
-
-      const restValues = [...values]
-
-      for (const n of seq) {
-        const vectorConstructorArgs = restValues.splice(0, n)
-
-        matrixConstructorArgs.push(createVec(n, vectorConstructorArgs))
-      }
-
-      return mat[r][c](...matrixConstructorArgs)
-    }
-
-    // valid args
+    // valid components count
     for (let r = 2; r <= 4; r++) {
       for (let c = 2; c <= 4; c++) {
         for (const seq of findSequences(r * c)) {
-          const values = Array(r * c)
-            .fill(0)
-            .map(() => Math.random())
+          const values = times(r * c, Math.random)
 
-          expect(matrixToArray(createMatrixFromSeq(r, c, seq, values))).toEqual(values)
+          expect(matrixToArray(createMatFromDistribution(r, c, distribute(values, seq)))).toEqual(
+            values,
+          )
         }
       }
     }
 
-    // invalid args
+    // invalid components count
     for (let r = 2; r <= 4; r++) {
       for (let c = 2; c <= 4; c++) {
         for (let n = 2; n < 18; n++) {
-
           if (r * c === n) continue
 
           for (const seq of sampleSize(findSequences(n), 20)) {
-            const values = Array(n)
-              .fill(0)
-              .map(() => Math.random())
+            const values = times(n, random)
 
-            expect(() => createMatrixFromSeq(r, c, seq, values)).toThrow()
+            expect(() => createMatFromDistribution(r, c, distribute(values, seq))).toThrow()
           }
-
         }
       }
     }
+
+    const m3 = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
+    expect(matrixToArray(mat2(m3))).toEqual([1, 2, 4, 5])
+    expect(matrixToArray(mat2x3(m3))).toEqual([1, 2, 3, 4, 5, 6])
+    expect(matrixToArray(mat3x2(m3))).toEqual([1, 2, 4, 5, 7, 8])
+
+    const m4 = mat4(16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+    expect(matrixToArray(mat2(m4))).toEqual([16, 15, 12, 11])
+    expect(matrixToArray(mat3(m4))).toEqual([16, 15, 14, 12, 11, 10, 8, 7, 6])
+    expect(matrixToArray(mat4(m4))).toEqual([16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
+    expect(matrixToArray(mat2x4(m4))).toEqual([16, 15, 14, 13, 12, 11, 10, 9])
+
+    expect(matrixToArray(mat2x3(mat3x4(12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)))).toEqual([
+      12, 11, 10, 8, 7, 6,
+    ])
+
+    // TODO: write tests for creation bigger matrix from smaller
   })
 
-  it('read rowApi and columnApi', () => {
-    let m = mat2x3(vec3(7), vec3(2, 4, 1))
+  it('rowApi and columnApi', () => {
+    const m1 = mat2x3(vec3(7), vec3(2, 4, 1))
 
-    expect([...m[0]]).toEqual([7, 7, 7])
-    expect([...m[1]]).toEqual([2, 4, 1])
+    expect([...m1[0]]).toEqual([7, 7, 7])
+    expect([...m1[1]]).toEqual([2, 4, 1])
 
-    expect([...m.columns[0]]).toEqual([7, 2])
-    expect([...m.columns[1]]).toEqual([7, 4])
-    expect([...m.columns[2]]).toEqual([7, 1])
+    expect([...m1.columns[0]]).toEqual([7, 2])
+    expect([...m1.columns[1]]).toEqual([7, 4])
+    expect([...m1.columns[2]]).toEqual([7, 1])
+
+    const m2 = mat2(10, 7, -7, 2)
+
+    expect([...m2[0].get('xxx')]).toEqual([10, 10, 10])
+    expect([...m2[1].get('yy')]).toEqual([2, 2])
+    expect(m2.columns[0].get('r')).toBe(10)
+    expect(m2.columns[1].get('g')).toBe(2)
+    expect([...m2.columns[1].get('yxyx')]).toEqual([2, 7, 2, 7])
+
+    const m3 = mat3x4(12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+    expect(matrixToArray(m3)).toEqual([12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
+
+    m3[0][0] *= -1
+    expect(matrixToArray(m3)).toEqual([-12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
+
+    m3[1][1] += 10
+    expect(matrixToArray(m3)).toEqual([-12, 11, 10, 9, 8, 17, 6, 5, 4, 3, 2, 1])
+
+    m3.columns[0][2] = 0
+    expect(matrixToArray(m3)).toEqual([-12, 11, 10, 9, 8, 17, 6, 5, 0, 3, 2, 1])
+
+    m3[0] = vec4(5, 5, 5, 5)
+    expect(matrixToArray(m3)).toEqual([5, 5, 5, 5, 8, 17, 6, 5, 0, 3, 2, 1])
+
+    m3.columns[1] = vec3(8, 8, 8)
+    expect(matrixToArray(m3)).toEqual([5, 8, 5, 5, 8, 8, 6, 5, 0, 8, 2, 1])
+
+    const m4 = mat2(0, 1, 2, 3)
+    expect(matrixToArray(m4)).toEqual([0, 1, 2, 3])
+
+    const row = m4[0]
+    expect([...row]).toEqual([0, 1])
+    row[0] = 5
+    expect(m4[0][0]).toBe(5)
+    expect(matrixToArray(m4)).toEqual([5, 1, 2, 3])
+    row[1] = 6
+    expect(matrixToArray(m4)).toEqual([5, 6, 2, 3])
+    row.set('xy', vec2(-3, -3))
+    expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
+
+    const rowCopy = m4[1].copy()
+    rowCopy[0] = Math.random()
+    expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
+    rowCopy[1] = Math.random()
+    expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
+    rowCopy.set('gr', vec2(Math.random(), Math.random()))
+    expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
+
+    const m5 = mat3(0, 1, 2, 3, 4, 5, 6, 7, 8)
+    const column = m5.columns[1]
+    expect([...column]).toEqual([1, 4, 7])
+    column[2] = 5
+    expect(m5[2][1]).toBe(5)
+    expect(m5.columns[1][2]).toBe(5)
+    expect(matrixToArray(m5)).toEqual([0, 1, 2, 3, 4, 5, 6, 5, 8])
+    column[1] = 6
+    expect(matrixToArray(m5)).toEqual([0, 1, 2, 3, 6, 5, 6, 5, 8])
+    column.set('zx', vec2(-3, -6))
+    expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
+
+    const columnCopy = m5.columns[2].copy()
+    columnCopy[0] = Math.random()
+    expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
+    columnCopy[1] = Math.random()
+    expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
+    columnCopy.set('gr', vec2(Math.random(), Math.random()))
+    expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
   })
 
   it('matcallable', () => {

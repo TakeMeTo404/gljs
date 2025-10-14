@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Vec2, vec2, vec3, vec4 } from '../dist'
+import { createVecFromDistribution, distribute, findSequences } from './utils'
+import { times } from 'lodash'
 
 describe('vec', () => {
   it('create vec2', () => {
@@ -59,6 +61,30 @@ describe('vec', () => {
     expect([...vec4(x, y, vec2(z, w))]).toEqual([x, y, z, w])
 
     expect([...vec4(vec2(x, y), vec2(z, w))]).toEqual([x, y, z, w])
+  })
+
+  it('create valid distribution', () => {
+    for (let n = 2; n <= 4; n++) {
+      for (const seq of findSequences(n)) {
+        const values = times(n, Math.random)
+
+        expect([...createVecFromDistribution(n, distribute(values, seq))]).toEqual(values)
+      }
+    }
+  })
+
+  it('create invalid distribution', () => {
+    for (let n = 2; n < 4; n++) {
+      for (let k = 0; k < 7; k++) {
+        if (k === 1 || k === n) continue
+
+        for (const seq of findSequences(k)) {
+          const values = times(k, Math.random)
+
+          expect(() => createVecFromDistribution(n, distribute(values, seq))).toThrow()
+        }
+      }
+    }
   })
 
   it('index properties', () => {

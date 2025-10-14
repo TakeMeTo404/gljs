@@ -9,7 +9,7 @@ export type MatCreateArgs<
   Args extends unknown[],
 > = Args extends [number]
   ? Args
-  : Args extends [MatRxC<infer R, infer C>]
+  : Args extends [MatRxC<any, any>]
     ? Args
     : Args extends Array<number | Vec2 | Vec3 | Vec4>
       ? CanCountComponents<Args> extends true

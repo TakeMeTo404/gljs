@@ -60,7 +60,8 @@
     "dts": true,
     "outDir": "dist",
     "clean": true,
-    "sourcemap": true
+    "sourcemap": true,
+    "minify": true
   },
   "prettier": {
     "singleQuote": true,

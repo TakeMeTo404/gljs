@@ -161,6 +161,6 @@ export const vec2 = vec(2) as any as <Args extends (number | Vec2)[]>(
 export const vec3 = vec(3) as any as <Args extends (number | Vec2 | Vec3)[]>(
   ...args: VecCreateArgs<3, Args>
 ) => Vec3
-export const vec4 = vec(4) as any as <Args extends (number | Vec2 | Vec4)[]>(
+export const vec4 = vec(4) as any as <Args extends (number | Vec2 | Vec3 | Vec4)[]>(
   ...args: VecCreateArgs<4, Args>
 ) => Vec4

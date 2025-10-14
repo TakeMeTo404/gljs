@@ -131,7 +131,7 @@ export const createMat = (matrixApi: MatrixApi) => {
         return createVec(rowApi)
       },
       set(v: BaseVector) {
-        for (let j = 0; j < matrixApi.r; j++) {
+        for (let j = 0; j < matrixApi.c; j++) {
           matrixApi[_i][j] = v[j]
         }
       },
@@ -195,7 +195,21 @@ const mat =
 
       return createMat(api)
     } else if (args.length === 1 && isMatrix(args[0])) {
-      throw new Error('Not implemented matrix create from matrix yet')
+      const api = createZeroApi(rowCount, columnCount)
+
+      const other = args[0]._api
+      const minR = Math.min(api.r, other.r)
+      const minC = Math.min(api.c, other.c)
+
+      for (let i = 0; i < minR; i++) {
+        for (let j = 0; j < minC; j++) {
+          api[i][j] = other[i][j]
+        }
+      }
+
+      // TODO: diagonal elements make 1 ???
+
+      return createMat(api)
     } else {
       const argsVectorApi = parseArgsToApi(args)
 
