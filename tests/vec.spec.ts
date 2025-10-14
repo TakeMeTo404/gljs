@@ -88,19 +88,28 @@ describe('vec', () => {
   })
 
   it('index properties', () => {
+    expect(vec2(7)[0]).toBe(7)
     expect(vec2(7)).toHaveProperty([0], 7)
+    expect(vec2(-11)[1]).toBe(-11)
     expect(vec2(-11)).toHaveProperty([1], -11)
     expect(vec2(6)).not.toHaveProperty([2])
     expect(vec2(6)).not.toHaveProperty([3])
 
+    expect(vec3(7)[0]).toBe(7)
     expect(vec3(7)).toHaveProperty([0], 7)
+    expect(vec3(-11)[1]).toBe(-11)
     expect(vec3(-11)).toHaveProperty([1], -11)
+    expect(vec3(6)[2]).toBe(6)
     expect(vec3(6)).toHaveProperty([2], 6)
     expect(vec3(0)).not.toHaveProperty([3])
 
+    expect(vec4(7)[0]).toBe(7)
     expect(vec4(7)).toHaveProperty([0], 7)
+    expect(vec4(-11)[1]).toBe(-11)
     expect(vec4(-11)).toHaveProperty([1], -11)
+    expect(vec4(6)[2]).toBe(6)
     expect(vec4(6)).toHaveProperty([2], 6)
+    expect(vec4(10)[3]).toBe(10)
     expect(vec4(10)).toHaveProperty([3], 10)
   })
 
@@ -242,5 +251,23 @@ describe('vec', () => {
     expect([...v4]).toEqual([20, 40, 0, 0])
     v4('+=', -10)
     expect([...v4]).toEqual([10, 30, -10, -10])
+  })
+
+  it('copy', () => {
+    // TODO
+    const v2 = vec2(7, 5)
+    expect([...v2]).toEqual([7, 5])
+
+    const copy = v2.copy()
+    copy[0] = 12
+    expect([...v2]).toEqual([7, 5])
+    expect([...copy]).toEqual([12, 5])
+
+    v2.copy().set('x', Math.random())
+    v2.copy().set('g', Math.random())
+    expect([...v2]).toEqual([7, 5])
+    v2.copy().set('xy', vec2(Math.random(), Math.random()))
+    expect([...v2]).toEqual([7, 5])
+    expect([...v2]).toEqual([7, 5])
   })
 })

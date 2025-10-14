@@ -208,4 +208,8 @@ describe('mat', () => {
 
     // TODO: matrix multiplication tests
   })
+
+  it('copy', () => {
+    // TODO
+  })
 })
