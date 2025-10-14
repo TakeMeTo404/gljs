@@ -42,6 +42,8 @@
     "format": "prettier . -w"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "prettier": "^3.6.2",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",

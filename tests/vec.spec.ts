@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { vec2, vec3, vec4 } from '../dist'
+import { Vec2, vec2, vec3, vec4 } from '../dist'
 
 describe('vec', () => {
   it('create vec2', () => {
@@ -8,6 +8,15 @@ describe('vec', () => {
     expect([...vec2(x)]).toEqual([x, x])
     expect([...vec2(x, y)]).toEqual([x, y])
     expect([...vec2(vec2(y, x))]).toEqual([y, x])
+
+    expect([...vec2(...[x, y])]).toEqual([x, y])
+
+    expect(() => vec2(...[7, -7])).not.toThrow()
+    expect(() => vec2(...([7, -7, 9] as number[]))).toThrow()
+
+    expect(() => vec2(...([vec2(7, 9)] as (number | Vec2)[]))).not.toThrow()
+
+    expect(() => vec2(...([vec2(7, 9), -5] as (number | Vec2)[]))).toThrow()
 
     // @ts-expect-error
     expect(() => vec2()).toThrowError('Cannot create Vec2')

@@ -1,5 +1,5 @@
 import { operations } from './const'
-import type { Vec2, Vec2CreateArgs, Vec3, Vec3CreateArgs, Vec4, Vec4CreateArgs } from './types/vec'
+import type { Vec2, Vec3, Vec4, VecCreateArgs } from './types/vec'
 
 const xyzw: string[] = ['x', 'y', 'z', 'w']
 const rgba: string[] = ['r', 'g', 'b', 'a']
@@ -155,6 +155,12 @@ const vec =
     }
   }
 
-export const vec2 = vec(2) as any as (...args: Vec2CreateArgs) => Vec2
-export const vec3 = vec(3) as any as (...args: Vec3CreateArgs) => Vec3
-export const vec4 = vec(4) as any as (...args: Vec4CreateArgs) => Vec4
+export const vec2 = vec(2) as any as <Args extends (number | Vec2)[]>(
+  ...args: VecCreateArgs<2, Args>
+) => Vec2
+export const vec3 = vec(3) as any as <Args extends (number | Vec2 | Vec3)[]>(
+  ...args: VecCreateArgs<3, Args>
+) => Vec3
+export const vec4 = vec(4) as any as <Args extends (number | Vec2 | Vec4)[]>(
+  ...args: VecCreateArgs<4, Args>
+) => Vec4
