@@ -131,6 +131,12 @@ export const createVec = (api: VectorApi) => {
     return createVec(newApi)
   }
 
+  vec.toString = () => {
+    let str = `vec${api.n}(`
+    for (let i = 0; i < api.n; i++) str += `${api[i]}, `
+    return str.substring(0, str.length - 2) + ')'
+  }
+
   return vec
 }
 

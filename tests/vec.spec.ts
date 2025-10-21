@@ -254,7 +254,6 @@ describe('vec', () => {
   })
 
   it('copy', () => {
-    // TODO
     const v2 = vec2(7, 5)
     expect([...v2]).toEqual([7, 5])
 
@@ -269,5 +268,11 @@ describe('vec', () => {
     v2.copy().set('xy', vec2(Math.random(), Math.random()))
     expect([...v2]).toEqual([7, 5])
     expect([...v2]).toEqual([7, 5])
+  })
+
+  it('toString', () => {
+    expect(vec2(7, 8).toString()).toBe('vec2(7, 8)')
+    expect(vec3(2, 5, 4).toString()).toBe('vec3(2, 5, 4)')
+    expect(vec4(-1, -2, -3, 0).toString()).toBe('vec4(-1, -2, -3, 0)')
   })
 })

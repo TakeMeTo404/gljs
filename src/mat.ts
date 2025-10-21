@@ -11,7 +11,8 @@ import type {
   Mat4x3,
   MatCreateArgs,
 } from './types/mat'
-import { BaseVector, createVec, parseArgsToApi, VectorApi } from './vec'
+import { Vec2, Vec3, Vec4 } from './types/vec'
+import { BaseVector, createVec, isVector, parseArgsToApi, VectorApi } from './vec'
 
 export type MatrixApi = {
   r: number
@@ -48,6 +49,32 @@ const isMatrix = (v: unknown): v is BaseMatrix => {
 
 export const createMat = (matrixApi: MatrixApi) => {
   const mat: BaseMatrix = ((op: string, other: number | BaseVector | BaseMatrix) => {
+    ;(function validate() {
+      if (op !== '*' && op !== '+' && op !== '-' && op !== '/') {
+        throw new Error(`Invalid matrix operation: ${op}`)
+      }
+
+      if (typeof other === 'number') return
+
+      if (op === '*') {
+        if (isVector(other)) {
+          if (other._api.n !== matrixApi.c) throw new Error('TODO')
+          return
+        }
+        if (isMatrix(other)) {
+          if (other._api.r !== matrixApi.c) throw new Error('TODO')
+          return
+        }
+        throw new Error('TODO')
+      } else {
+        if (isMatrix(other)) {
+          if (other._api.r !== matrixApi.r || other._api.c !== matrixApi.c) throw new Error('TODO')
+          return
+        }
+        throw new Error('TODO')
+      }
+    })()
+
     if (op === '+' || op === '-' || op === '/' || (op === '*' && typeof other === 'number')) {
       const getOtherAt: (i: number, j: number) => number =
         typeof other === 'number' ? () => other : (i, j) => (other as BaseMatrix)[i][j]
@@ -67,12 +94,10 @@ export const createMat = (matrixApi: MatrixApi) => {
 
       return createMat(api)
     } else {
-      if ((other as BaseMatrix).columns) {
-        const m = other as BaseMatrix
-
+      if (isMatrix(other)) {
         const api: MatrixApi = {
           r: matrixApi.r,
-          c: m._api.c,
+          c: other._api.c,
         }
 
         for (let i = 0; i < api.r; i++) {
@@ -82,15 +107,13 @@ export const createMat = (matrixApi: MatrixApi) => {
             api[i][j] = 0
 
             for (let k = 0; k < matrixApi.c; k++) {
-              api[i][j] += matrixApi[i][k] * m[k][j]
+              api[i][j] += matrixApi[i][k] * other[k][j]
             }
           }
-
-          return createMat(api)
         }
-      } else {
-        const v = other as BaseVector
 
+        return createMat(api)
+      } else if (isVector(other)) {
         const api: VectorApi = {
           n: matrixApi.r,
         }
@@ -99,7 +122,7 @@ export const createMat = (matrixApi: MatrixApi) => {
           api[i] = 0
 
           for (let j = 0; j < matrixApi.c; j++) {
-            api[i] += v[j] * matrixApi[i][j]
+            api[i] += other[j] * matrixApi[i][j]
           }
         }
 
@@ -186,53 +209,80 @@ export const createMat = (matrixApi: MatrixApi) => {
 const mat =
   (rowCount: number, columnCount: number) =>
   (...args: any[]) => {
+    // from number
     if (args.length === 1 && typeof args[0] === 'number') {
       const api = createZeroApi(rowCount, columnCount)
 
+      // repeat scalar at diagonal elements
       for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
         api[i - 1][i - 1] = args[0]
       }
 
       return createMat(api)
-    } else if (args.length === 1 && isMatrix(args[0])) {
+    }
+
+    // from single vector – diagonal
+    if (
+      args.length === 1 &&
+      isVector(args[0]) &&
+      args[0]._api.n === Math.min(rowCount, columnCount)
+    ) {
+      const api = createZeroApi(rowCount, columnCount)
+
+      // repeat scalar at diagonal elements
+      for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
+        api[i - 1][i - 1] = args[0][i - 1]
+      }
+
+      return createMat(api)
+    }
+
+    // from other matrix
+    if (args.length === 1 && isMatrix(args[0])) {
       const api = createZeroApi(rowCount, columnCount)
 
       const other = args[0]._api
+
       const minR = Math.min(api.r, other.r)
       const minC = Math.min(api.c, other.c)
 
+      // make diagonal 1
+      for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
+        api[i - 1][i - 1] = 1
+      }
+
+      // copy window from other matrix
       for (let i = 0; i < minR; i++) {
         for (let j = 0; j < minC; j++) {
           api[i][j] = other[i][j]
         }
       }
 
-      // TODO: diagonal elements make 1 ???
-
-      return createMat(api)
-    } else {
-      const argsVectorApi = parseArgsToApi(args)
-
-      if (argsVectorApi.n !== rowCount * columnCount) {
-        throw new Error(
-          `Cannot create Mat${rowCount}x${columnCount}. Need ${rowCount * columnCount} components, but given ${argsVectorApi.n}`,
-        )
-      }
-
-      const api: MatrixApi = {
-        r: rowCount,
-        c: columnCount,
-      }
-
-      for (let i = 0; i < rowCount; i++) {
-        api[i] = {}
-        for (let j = 0; j < columnCount; j++) {
-          api[i][j] = argsVectorApi[i * columnCount + j]
-        }
-      }
-
       return createMat(api)
     }
+
+    // from r*c components (numbers and vectors)
+    const argsVectorApi = parseArgsToApi(args)
+
+    if (argsVectorApi.n !== rowCount * columnCount) {
+      throw new Error(
+        `Cannot create Mat${rowCount}x${columnCount}. Need ${rowCount * columnCount} components, but given ${argsVectorApi.n}`,
+      )
+    }
+
+    const api: MatrixApi = {
+      r: rowCount,
+      c: columnCount,
+    }
+
+    for (let i = 0; i < rowCount; i++) {
+      api[i] = {}
+      for (let j = 0; j < columnCount; j++) {
+        api[i][j] = argsVectorApi[i * columnCount + j]
+      }
+    }
+
+    return createMat(api)
   }
 
 export const mat2 = mat(2, 2) as any as <Args extends unknown[]>(
