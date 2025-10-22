@@ -21,15 +21,15 @@ describe('vec', () => {
     expect(() => vec2(...([vec2(7, 9), -5] as (number | Vec2)[]))).toThrow()
 
     // @ts-expect-error
-    expect(() => vec2()).toThrowError('Cannot create Vec2')
+    expect(() => vec2()).toThrow()
     // @ts-expect-error
-    expect(() => vec2([1, 2])).toThrowError()
+    expect(() => vec2([1, 2])).toThrow()
     // @ts-expect-error
-    expect(() => vec2(2, 3, 4)).toThrowError('Cannot create Vec2')
+    expect(() => vec2(2, 3, 4)).toThrow()
     // @ts-expect-error
-    expect(() => vec2(vec3(1))).toThrowError('Cannot create Vec2')
+    expect(() => vec2(vec3(1))).toThrow()
     // @ts-expect-error
-    expect(() => vec2(vec2(1), 1)).toThrowError('Cannot create Vec2')
+    expect(() => vec2(vec2(1), 1)).toThrow()
     // @ts-expect-error
     expect(() => vec2(vec2(1), null)).toThrowError()
   })

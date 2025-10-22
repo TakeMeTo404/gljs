@@ -25,7 +25,7 @@ import {
   matrixToArray,
   matRxC,
 } from './utils'
-import { memoize, random, range, repeat, sampleSize, sum, times } from 'lodash'
+import { random, range, sampleSize, sum, times } from 'lodash'
 
 describe('mat', () => {
   it('create from scalar', () => {
@@ -329,11 +329,6 @@ describe('mat', () => {
       ),
     ).toEqual([170, 180, 426, 452, 682, 724])
 
-    // @ts-expect-error
-    expect(() => mat2(1)()).toThrow()
-    // @ts-expect-error
-    expect(() => mat2(1)('')).toThrow()
-
     for (let r1 = 2; r1 <= 4; r1++) {
       for (let c1 = 2; c1 <= 4; c1++) {
         for (let r2 = 2; r2 <= 4; r2++) {
@@ -342,9 +337,7 @@ describe('mat', () => {
             const m2 = matRxC[r2][c2](1) as any
 
             if (c1 === r2) {
-              expect(() => m1('*', m2)).not.toThrow()
-            } else {
-              expect(() => m1('*', m2)).toThrow()
+              expect(matrixToArray(m1('*', m2)).length).toBe(r1 * c2)
             }
           }
         }

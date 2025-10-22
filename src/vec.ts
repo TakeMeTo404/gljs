@@ -37,7 +37,7 @@ export const parseArgsToApi = (args: unknown[]): VectorApi => {
         api.n++
       }
     } else {
-      throw new Error('Vector and matrix constructors accept only numbers and other vectors')
+      throw new Error('Invalid args')
     }
   }
 
@@ -56,8 +56,6 @@ export type BaseVector = {
 
 export const createVec = (api: VectorApi) => {
   const vec: BaseVector = ((op: string, other: number | BaseVector) => {
-    // todo: assert args
-
     const isAssignOperation = !(op in operations)
 
     const f = isAssignOperation ? operations[op[0]] : operations[op]
@@ -104,8 +102,6 @@ export const createVec = (api: VectorApi) => {
   }
 
   vec.get = (selection) => {
-    // todo: assert args
-
     if (selection.length === 1) {
       return api[selectionIndexMap[selection[0]]]
     }
@@ -154,7 +150,7 @@ const vec =
       const api = parseArgsToApi(args)
 
       if (api.n !== n) {
-        throw new Error(`Cannot create Vec${n}. Need ${n} components, but given ${api.n}`)
+        throw new Error('Invalid args')
       }
 
       return createVec(api)

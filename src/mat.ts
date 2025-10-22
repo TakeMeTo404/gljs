@@ -49,32 +49,6 @@ const isMatrix = (v: unknown): v is BaseMatrix => {
 
 export const createMat = (matrixApi: MatrixApi) => {
   const mat: BaseMatrix = ((op: string, other: number | BaseVector | BaseMatrix) => {
-    ;(function validate() {
-      if (op !== '*' && op !== '+' && op !== '-' && op !== '/') {
-        throw new Error(`Invalid matrix operation: ${op}`)
-      }
-
-      if (typeof other === 'number') return
-
-      if (op === '*') {
-        if (isVector(other)) {
-          if (other._api.n !== matrixApi.c) throw new Error('TODO')
-          return
-        }
-        if (isMatrix(other)) {
-          if (other._api.r !== matrixApi.c) throw new Error('TODO')
-          return
-        }
-        throw new Error('TODO')
-      } else {
-        if (isMatrix(other)) {
-          if (other._api.r !== matrixApi.r || other._api.c !== matrixApi.c) throw new Error('TODO')
-          return
-        }
-        throw new Error('TODO')
-      }
-    })()
-
     if (op === '+' || op === '-' || op === '/' || (op === '*' && typeof other === 'number')) {
       const getOtherAt: (i: number, j: number) => number =
         typeof other === 'number' ? () => other : (i, j) => (other as BaseMatrix)[i][j]
@@ -265,9 +239,7 @@ const mat =
     const argsVectorApi = parseArgsToApi(args)
 
     if (argsVectorApi.n !== rowCount * columnCount) {
-      throw new Error(
-        `Cannot create Mat${rowCount}x${columnCount}. Need ${rowCount * columnCount} components, but given ${argsVectorApi.n}`,
-      )
+      throw new Error('Invalid args')
     }
 
     const api: MatrixApi = {
