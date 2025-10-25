@@ -41,12 +41,14 @@ import {
   step,
   tan,
   tanh,
+  transpose,
   trunc,
   vec2,
   vec3,
   vec4,
 } from '../dist'
-import { matrixToArray } from './utils'
+import { matrixToArray, matRxC } from './utils'
+import { sum, times } from 'lodash'
 
 describe('op', () => {
   it('exp', () => {
@@ -337,9 +339,32 @@ describe('op', () => {
 
   it('outerProduct', () => {})
 
-  it('transpose', () => {})
+  it('transpose', () => {
+    for (let r = 2; r <= 4; r++) {
+      for (let c = 2; c <= 4; c++) {
+        const values = times(r * c, Math.random)
 
-  it('matrixCompMult', () => {})
+        const m1 = matRxC[r][c](...values) as any
+        const m2 = transpose(m1) as any
+
+        expect(m2._api.r).toBe(c)
+        expect(m2._api.c).toBe(r)
+
+        expect(sum(matrixToArray(m2))).toBeCloseTo(sum(matrixToArray(m1)), 7)
+
+        for (let i = 0; i < r; i++) {
+          expect([...m1[i]]).toEqual([...m2.columns[i]])
+        }
+        for (let j = 0; j < c; j++) {
+          expect([...m1.columns[j]]).toEqual([...m2[j]])
+        }
+      }
+    }
+  })
+
+  it('matrixCompMult', () => {
+
+  })
 
   it('determinant', () => {})
 

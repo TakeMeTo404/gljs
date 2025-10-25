@@ -238,7 +238,7 @@ const mat =
     // from r*c components (numbers and vectors)
     const argsVectorApi = parseArgsToApi(args)
 
-    if (argsVectorApi.n !== rowCount * columnCount) {
+    if (!argsVectorApi || argsVectorApi.n !== rowCount * columnCount) {
       throw new Error('Invalid args')
     }
 
