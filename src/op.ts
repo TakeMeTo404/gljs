@@ -1,4 +1,4 @@
-import { BaseMatrix, createMat, MatrixApi } from './mat'
+import { BaseMatrix, createMat, isMatrix, MatrixApi } from './mat'
 import {
   Mat2,
   Mat2x3,
@@ -12,7 +12,7 @@ import {
   MatRxC,
 } from './types/mat'
 import { Vec2, Vec3, Vec4 } from './types/vec'
-import { BaseVector, createVec, VectorApi } from './vec'
+import { BaseVector, createVec, isVector, VectorApi } from './vec'
 
 type _<T extends number | Vec2 | Vec3 | Vec4> = T extends number ? number : T
 
@@ -43,10 +43,18 @@ type ColumnsCount<
       ? 4
       : never
 
-const createUnaryOperator = (f: (x: number) => number) => {
+const throwInvalid = (nameof: string) => {
+  throw new Error(`Invalid '${nameof}' operator args`)
+}
+
+const createUnaryOperator = (f: (x: number) => number, nameof: string) => {
   return ((x: number | BaseVector): number | BaseVector => {
     if (typeof x === 'number') {
       return f(x)
+    }
+
+    if (!isVector(x)) {
+      throwInvalid(nameof)
     }
 
     const newApi: VectorApi = {
@@ -61,38 +69,58 @@ const createUnaryOperator = (f: (x: number) => number) => {
   }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => _<V>
 }
 
-export const exp = createUnaryOperator(Math.exp)
-export const sqrt = createUnaryOperator(Math.sqrt)
-export const inversesqrt = createUnaryOperator((x) => 1 / Math.sqrt(x))
-export const log = createUnaryOperator(Math.log)
-export const exp2 = createUnaryOperator((a) => 2 ** a)
-export const log2 = createUnaryOperator(Math.log2)
-export const abs = createUnaryOperator(Math.abs)
-export const sign = createUnaryOperator(Math.sign)
-export const floor = createUnaryOperator(Math.floor)
-export const ceil = createUnaryOperator(Math.ceil)
-export const round = createUnaryOperator(Math.round)
-export const fract = createUnaryOperator((x) => x - Math.floor(x))
-export const trunc = createUnaryOperator(Math.trunc)
+export const exp = createUnaryOperator(Math.exp, 'exp')
+export const sqrt = createUnaryOperator(Math.sqrt, 'sqrt')
+export const inversesqrt = createUnaryOperator((x) => 1 / Math.sqrt(x), 'inversesqrt')
+export const log = createUnaryOperator(Math.log, 'log')
+export const exp2 = createUnaryOperator((a) => 2 ** a, 'exp2')
+export const log2 = createUnaryOperator(Math.log2, 'log2')
+export const abs = createUnaryOperator(Math.abs, 'abs')
+export const sign = createUnaryOperator(Math.sign, 'sign')
+export const floor = createUnaryOperator(Math.floor, 'floor')
+export const ceil = createUnaryOperator(Math.ceil, 'ceil')
+export const round = createUnaryOperator(Math.round, 'round')
+export const fract = createUnaryOperator((x) => x - Math.floor(x), 'fract')
+export const trunc = createUnaryOperator(Math.trunc, 'trunc')
 
-export const sin = createUnaryOperator(Math.sin)
-export const cos = createUnaryOperator(Math.cos)
-export const tan = createUnaryOperator(Math.tan)
-export const asin = createUnaryOperator(Math.asin)
-export const acos = createUnaryOperator(Math.acos)
-export const atan = createUnaryOperator(Math.atan)
-export const sinh = createUnaryOperator(Math.sinh)
-export const cosh = createUnaryOperator(Math.cosh)
-export const tanh = createUnaryOperator(Math.tanh)
-export const asinh = createUnaryOperator(Math.asinh)
-export const acosh = createUnaryOperator(Math.acosh)
-export const atanh = createUnaryOperator(Math.atanh)
+export const sin = createUnaryOperator(Math.sin, 'sin')
+export const cos = createUnaryOperator(Math.cos, 'cos')
+export const tan = createUnaryOperator(Math.tan, 'tan')
+export const asin = createUnaryOperator(Math.asin, 'asin')
+export const acos = createUnaryOperator(Math.acos, 'acos')
+export const atan = createUnaryOperator(Math.atan, 'atan')
+export const sinh = createUnaryOperator(Math.sinh, 'sinh')
+export const cosh = createUnaryOperator(Math.cosh, 'cosh')
+export const tanh = createUnaryOperator(Math.tanh, 'tanh')
+export const asinh = createUnaryOperator(Math.asinh, 'asinh')
+export const acosh = createUnaryOperator(Math.acosh, 'acosh')
+export const atanh = createUnaryOperator(Math.atanh, 'atanh')
 
-export const degrees = createUnaryOperator((radians) => (radians * 180) / Math.PI)
-export const radians = createUnaryOperator((degrees) => (degrees * Math.PI) / 180)
+export const degrees = createUnaryOperator((radians) => (radians * 180) / Math.PI, 'degrees')
+export const radians = createUnaryOperator((degrees) => (degrees * Math.PI) / 180, 'radians')
 
-const createBinaryOperator = (f: (a: number, b: number) => number) => {
+const createBinaryOperator = (f: (a: number, b: number) => number, nameof: string) => {
   return ((a: number | BaseVector, b: number | BaseVector) => {
+    ;(function validate() {
+      if (typeof a === 'number') {
+        if (typeof b === 'number') {
+          return
+        }
+        throwInvalid(nameof)
+      }
+
+      if (isVector(a)) {
+        if (typeof b === 'number') {
+          return
+        }
+        if (isVector(b) && b._api.n === a._api.n) {
+          return
+        }
+      }
+
+      throwInvalid(nameof)
+    })()
+
     if (typeof a === 'number') {
       return f(a, b as number)
     }
@@ -109,15 +137,34 @@ const createBinaryOperator = (f: (a: number, b: number) => number) => {
   }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: number | NoInfer<V>) => _<V>
 }
 
-export const pow = createBinaryOperator((a, b) => Math.pow(a, b))
-export const min = createBinaryOperator((a, b) => Math.min(a, b))
-export const max = createBinaryOperator((a, b) => Math.max(a, b))
-export const mod = createBinaryOperator((a, b) => a % b)
+export const pow = createBinaryOperator((a, b) => Math.pow(a, b), 'pow')
+export const min = createBinaryOperator((a, b) => Math.min(a, b), 'min')
+export const max = createBinaryOperator((a, b) => Math.max(a, b), 'max')
+export const mod = createBinaryOperator((a, b) => a % b, 'mod')
 
-export const step = createBinaryOperator((egde, x) => (x < egde ? 0 : 1))
+export const step = createBinaryOperator((egde, x) => (x < egde ? 0 : 1), 'step')
 
-const createTernaryOperator = (f: (a: number, b: number, c: number) => number) => {
+const createTernaryOperator = (f: (a: number, b: number, c: number) => number, nameof: string) => {
   return ((a: number | BaseVector, b: number | BaseVector, c: number | BaseVector) => {
+    ;(function validate() {
+      if (typeof a === 'number') {
+        if (typeof b === 'number' && typeof c === 'number') {
+          return
+        }
+        throwInvalid(nameof)
+      }
+
+      if (isVector(a)) {
+        if (typeof b === 'number' || (isVector(b) && b._api.n === a._api.n)) {
+          if (typeof c === 'number' || (isVector(c) && c._api.n === a._api.n)) {
+            return
+          }
+        }
+      }
+
+      throwInvalid(nameof)
+    })()
+
     if (typeof a === 'number') {
       return f(a, b as number, c as number)
     }
@@ -139,14 +186,18 @@ const createTernaryOperator = (f: (a: number, b: number, c: number) => number) =
 }
 
 const _clamp = (x: number, min: number, max: number) => (x < min ? min : x > max ? max : x)
-export const clamp = createTernaryOperator(_clamp)
-export const mix = createTernaryOperator((x, y, a) => x * (1 - a) + y * a)
+export const clamp = createTernaryOperator(_clamp, 'clamp')
+export const mix = createTernaryOperator((x, y, a) => x * (1 - a) + y * a, 'mix')
 export const smoothstep = createTernaryOperator((edge0, edge1, x) => {
   const t = _clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
   return t * t * (3.0 - 2.0 * t)
-})
+}, 'smoothstep')
 
 export const length = ((v: number | BaseVector) => {
+  if (typeof v !== 'number' && !isVector(v)) {
+    throwInvalid('length')
+  }
+
   if (typeof v === 'number') {
     return v
   }
@@ -159,7 +210,16 @@ export const length = ((v: number | BaseVector) => {
   return Math.sqrt(sum)
 }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => number
 
+const validateEqualSize = (x: number | BaseVector, y: number | BaseVector, nameof: string) => {
+  if (typeof x === 'number' && typeof y === 'number') return
+  if (isVector(x) && isVector(y) && x._api.n === y._api.n) return
+
+  throwInvalid(nameof)
+}
+
 export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
+  validateEqualSize(x, y, 'distance')
+
   if (typeof x === 'number') {
     return Math.abs((y as number) - x)
   }
@@ -172,7 +232,7 @@ export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
   return Math.sqrt(sum)
 }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
 
-export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
+const _dot = (x: number | BaseVector, y: number | BaseVector) => {
   if (typeof x === 'number') {
     return x * (y as number)
   }
@@ -183,9 +243,19 @@ export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
   }
 
   return sum
+}
+
+export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
+  validateEqualSize(x, y, 'dot')
+
+  return _dot(x, y)
 }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
 
 export const cross = (a: Vec3, b: Vec3): Vec3 => {
+  if (!isVector(a) || !isVector(b) || a._api.n !== 3 || b._api.n !== 3) {
+    throwInvalid('cross')
+  }
+
   const api: VectorApi = {
     n: 3,
   }
@@ -198,6 +268,10 @@ export const cross = (a: Vec3, b: Vec3): Vec3 => {
 }
 
 export const normalize = ((v: number | BaseVector) => {
+  if (typeof v !== 'number' && !isVector(v)) {
+    throwInvalid('normalize')
+  }
+
   if (typeof v === 'number') {
     return v / Math.abs(v)
   }
@@ -220,6 +294,24 @@ export const faceforward = ((
   I: number | BaseVector,
   Nref: number | BaseVector,
 ) => {
+  ;(function validate() {
+    if (typeof N === 'number' && typeof I === 'number' && typeof Nref === 'number') {
+      return
+    }
+
+    if (
+      isVector(N) &&
+      isVector(I) &&
+      isVector(Nref) &&
+      I._api.n === N._api.n &&
+      Nref._api.n === N._api.n
+    ) {
+      return
+    }
+
+    throwInvalid('faceforward')
+  })()
+
   if (dot(I as any, Nref as any) < 0) {
     return N
   } else {
@@ -240,6 +332,8 @@ export const faceforward = ((
 }) as <V extends number | Vec2 | Vec3 | Vec4>(N: _<V>, I: NoInfer<V>, Nref: NoInfer<V>) => _<V>
 
 export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
+  validateEqualSize(I, N, 'reflect')
+
   if (typeof I === 'number') {
     return I - 2 * (N as number) * I * (N as number)
   }
@@ -258,6 +352,9 @@ export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
 }) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<V>) => _<V>
 
 export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: number) => {
+  validateEqualSize(I, N, 'refract')
+  if (typeof eta !== 'number') throwInvalid('refract')
+
   const d = dot(I as any, N as any)
   const k: number = 1 - eta * eta * (1 - d * d)
 
@@ -293,6 +390,10 @@ export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: nu
 }) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<_<V>>, eta: number) => _<V>
 
 export const outerProduct = ((a: BaseVector, b: BaseVector): BaseMatrix => {
+  if (!isVector(a) || !isVector(b)) {
+    throwInvalid('outerProduct')
+  }
+
   const api: MatrixApi = {
     r: a._api.n,
     c: b._api.n,
@@ -313,6 +414,10 @@ export const outerProduct = ((a: BaseVector, b: BaseVector): BaseMatrix => {
 ) => MatRxC<VecSize<A>, VecSize<B>>
 
 export const transpose = ((mat: BaseMatrix): BaseMatrix => {
+  if (!isMatrix(mat)) {
+    throwInvalid('transpose')
+  }
+
   const api: MatrixApi = {
     r: mat._api.c,
     c: mat._api.r,
@@ -334,6 +439,10 @@ export const transpose = ((mat: BaseMatrix): BaseMatrix => {
 ) => MatRxC<ColumnsCount<M>, RowsCount<M>>
 
 export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
+  if (!isMatrix(x) || !isMatrix(y) || x._api.r !== y._api.r || x._api.c !== y._api.c) {
+    throwInvalid('matrixCompMult')
+  }
+
   const api: MatrixApi = {
     r: x._api.r,
     c: x._api.c,
@@ -413,6 +522,10 @@ const _determinant = (api: MatrixApi): number => {
 }
 
 export const determinant = ((mat: BaseMatrix): number => {
+  if (!isMatrix(mat)) {
+    throwInvalid('determinant')
+  }
+
   return _determinant(mat._api)
 }) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => number
 

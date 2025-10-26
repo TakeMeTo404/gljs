@@ -47,7 +47,7 @@ export type BaseMatrix = {
   columns: Record<number, BaseVector>
 } & Record<number, BaseVector>
 
-const isMatrix = (v: unknown): v is BaseMatrix => {
+export const isMatrix = (v: unknown): v is BaseMatrix => {
   return Boolean(v) && typeof v === 'function' && typeof (v as any)._api?.r === 'number'
 }
 
