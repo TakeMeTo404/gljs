@@ -1,5 +1,5 @@
 import { describe, it, expect, test } from 'vitest'
-import { Vec2, vec2, vec3, vec4 } from '../dist'
+import { mat2, Vec2, vec2, vec3, vec4 } from '../dist'
 import { createVec, createVecFromDistribution, distribute, findSequences } from './utils'
 import { times } from 'lodash'
 
@@ -73,15 +73,36 @@ describe('vec', () => {
     }
   })
 
-  it('create invalid distribution', () => {
-    for (let n = 2; n < 4; n++) {
+  it('create invalid', () => {
+    for (let n = 2; n <= 4; n++) {
+      expect(() => createVec(n, [])).toThrow(`Invalid Vec${n} create args`)
+      ;[
+        '',
+        { x: 1, y: 1 },
+        {},
+        function () {},
+        [],
+        [1, 2],
+        [1, 4, 8],
+        [5, 10, -1],
+        null,
+        undefined,
+        mat2(1),
+      ].forEach((arg) => {
+        expect(() => createVec(n, [arg])).toThrow(`Invalid Vec${n} create args`)
+      })
+    }
+
+    for (let n = 2; n <= 4; n++) {
       for (let k = 0; k < 7; k++) {
         if (k === 1 || k === n) continue
 
         for (const seq of findSequences(k)) {
           const values = times(k, Math.random)
 
-          expect(() => createVecFromDistribution(n, distribute(values, seq))).toThrow()
+          expect(() => createVecFromDistribution(n, distribute(values, seq))).toThrow(
+            `Invalid Vec${n} create args`,
+          )
         }
       }
     }

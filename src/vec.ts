@@ -82,6 +82,7 @@ const isValidGetSelection = (selection: string, n: number) => {
 
 export const createVec = (api: VectorApi) => {
   const vec: BaseVector = ((op: string, other: number | BaseVector) => {
+    // TODO: validation
     const isAssignOperation = !(op in operations)
 
     const f = isAssignOperation ? operations[op[0]] : operations[op]

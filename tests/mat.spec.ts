@@ -152,8 +152,21 @@ describe('mat', () => {
         }
       }
     }
+  })
 
-    // // invalid components count
+  it('create invalid', () => {
+    expect(() => (mat2 as any)()).toThrow('Invalid Mat2 create args')
+    expect(() => (mat2 as any)([1, 2, 3, 4])).toThrow('Invalid Mat2 create args')
+    expect(() => (mat3 as any)(null)).toThrow('Invalid Mat3 create args')
+    expect(() => (mat4 as any)(undefined)).toThrow('Invalid Mat4 create args')
+    expect(() => (mat2x3 as any)(function () {})).toThrow('Invalid Mat2x3 create args')
+    expect(() => (mat2x4 as any)('1')).toThrow('Invalid Mat2x4 create args')
+    expect(() => (mat3x2 as any)(Symbol.keyFor)).toThrow('Invalid Mat3x2 create args')
+    expect(() => (mat3x2 as any)([])).toThrow('Invalid Mat3x2 create args')
+    expect(() => (mat4x2 as any)(times(8, Math.random))).toThrow('Invalid Mat4x2 create args')
+    expect(() => (mat4x3 as any)(vec4(2))).toThrow('Invalid Mat4x3 create args')
+
+    // invalid components count
     for (let r = 2; r <= 4; r++) {
       for (let c = 2; c <= 4; c++) {
         for (let n = 2; n < 18; n++) {
@@ -252,7 +265,35 @@ describe('mat', () => {
     expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
   })
 
-  it('ccallable', () => {
+  it('set invalid rows and columns', () => {
+    const m2 = mat2(1) as any
+
+    ;[
+      null,
+      undefined,
+      0,
+      [1, 2],
+      { x: 1, y: 1 },
+      [],
+      {},
+      '',
+      function () {},
+      Symbol.iterator,
+      vec3(1),
+      vec4(1),
+    ].forEach((value) => {
+      expect(() => (m2[0] = value)).toThrow(`Invalid Mat2 row value. Must be Vec2`)
+      expect(() => (m2.columns[0] = value)).toThrow(`Invalid Mat2 column value. Must be Vec2`)
+    })
+
+    const m3x4 = mat3x4(1) as any
+    expect(() => (m3x4[0] = vec2(1))).toThrow(`Invalid Mat3x4 row value. Must be Vec4`)
+    expect(() => (m3x4[0] = vec3(1))).toThrow(`Invalid Mat3x4 row value. Must be Vec4`)
+    expect(() => (m3x4.columns[0] = vec2(1))).toThrow(`Invalid Mat3x4 column value. Must be Vec3`)
+    expect(() => (m3x4.columns[0] = vec4(1))).toThrow(`Invalid Mat3x4 column value. Must be Vec3`)
+  })
+
+  it('callable', () => {
     expect(matrixToArray(mat2(2)('+', 7))).toEqual([9, 7, 7, 9])
 
     expect(matrixToArray(mat4x2(8, 7, 6, 5, 4, 3, 2, 1)('*', -1))).toEqual([
