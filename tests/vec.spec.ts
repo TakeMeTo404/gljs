@@ -389,6 +389,42 @@ describe('vec', () => {
     v4('+=', -10)
     expect([...v4]).toEqual([10, 30, -10, -10])
   })
+  ;('callable invalid')
+  it('abc', () => {
+    const v2 = vec2(1) as any
+    expect(() => v2()).toThrow('Invalid Vec2 operation type: undefined')
+    expect(() => v2(1)).toThrow('Invalid Vec2 operation type: number')
+    expect(() => v2(undefined)).toThrow('Invalid Vec2 operation type: undefined')
+    expect(() => v2(null)).toThrow('Invalid Vec2 operation type: object')
+    expect(() => v2({})).toThrow('Invalid Vec2 operation type: object')
+    expect(() => v2([])).toThrow('Invalid Vec2 operation type: object')
+    expect(() => v2(function () {})).toThrow('Invalid Vec2 operation type: function')
+    expect(() => v2(Symbol.iterator)).toThrow('Invalid Vec2 operation type: symbol')
+
+    const v3 = vec3(1) as any
+    expect(() => v3('', 1)).toThrow(`Invalid Vec3 operation ''`)
+    expect(() => v3(' ', 1)).toThrow(`Invalid Vec3 operation ' '`)
+    expect(() => v3('+ ', 1)).toThrow(`Invalid Vec3 operation '+ '`)
+    expect(() => v3('–', 1)).toThrow(`Invalid Vec3 operation '–'`) // big minus (–, not -)
+    expect(() => v3('=+', 1)).toThrow(`Invalid Vec3 operation '=+'`)
+    expect(() => v3('=', 1)).toThrow(`Invalid Vec3 operation '='`)
+    expect(() => v3('.', 1)).toThrow(`Invalid Vec3 operation '.'`)
+
+    const v4 = vec4(1) as any
+    expect(() => v4('+', vec2(1))).toThrow(`Invalid Vec4 '+' operation arg. Must be number or Vec4`)
+    expect(() => v4('-', vec3(1))).toThrow(`Invalid Vec4 '-' operation arg. Must be number or Vec4`)
+    expect(() => v4('*')).toThrow(`Invalid Vec4 '*' operation arg. Must be number or Vec4`)
+    expect(() => v4('/', [1])).toThrow(`Invalid Vec4 '/' operation arg. Must be number or Vec4`)
+    expect(() => v4('+=', null)).toThrow(`Invalid Vec4 '+=' operation arg. Must be number or Vec4`)
+    expect(() => v4('-=', undefined)).toThrow(
+      `Invalid Vec4 '-=' operation arg. Must be number or Vec4`,
+    )
+    expect(() => v4('*=', function () {})).toThrow(
+      `Invalid Vec4 '*=' operation arg. Must be number or Vec4`,
+    )
+    expect(() => v4('/=', '0')).toThrow(`Invalid Vec4 '/=' operation arg. Must be number or Vec4`)
+    expect(() => v4('+', mat2(1))).toThrow(`Invalid Vec4 '+' operation arg. Must be number or Vec4`)
+  })
 
   it('copy', () => {
     const v2 = vec2(7, 5)

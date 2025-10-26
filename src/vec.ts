@@ -82,7 +82,22 @@ const isValidGetSelection = (selection: string, n: number) => {
 
 export const createVec = (api: VectorApi) => {
   const vec: BaseVector = ((op: string, other: number | BaseVector) => {
-    // TODO: validation
+    ;(function validate() {
+      if (typeof op !== 'string') {
+        throw new TypeError(`Invalid Vec${api.n} operation type: ${typeof op}`)
+      }
+
+      if (!(op in operations) && !(op.length === 2 && op[1] === '=' && op[0] in operations)) {
+        throw new Error(`Invalid Vec${api.n} operation '${op}'`)
+      }
+
+      if (typeof other === 'number' || (isVector(other) && other._api.n === api.n)) {
+        return
+      }
+
+      throw new Error(`Invalid Vec${api.n} '${op}' operation arg. Must be number or Vec${api.n}`)
+    })()
+
     const isAssignOperation = !(op in operations)
 
     const f = isAssignOperation ? operations[op[0]] : operations[op]
