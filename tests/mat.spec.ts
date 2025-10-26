@@ -386,6 +386,92 @@ describe('mat', () => {
     }
   })
 
+  it('callable_invalid', () => {
+    const m2 = mat2(1) as any
+    expect(() => m2()).toThrow('Invalid Mat2 operation type: undefined')
+    expect(() => m2(undefined)).toThrow('Invalid Mat2 operation type: undefined')
+    expect(() => m2(null)).toThrow('Invalid Mat2 operation type: object')
+    expect(() => m2({})).toThrow('Invalid Mat2 operation type: object')
+    expect(() => m2([])).toThrow('Invalid Mat2 operation type: object')
+    expect(() => m2(vec2(1))).toThrow('Invalid Mat2 operation type: function')
+    expect(() => m2(mat2(2))).toThrow('Invalid Mat2 operation type: function')
+
+    const m3x2 = mat3x2(1) as any
+    expect(() => m3x2('+=', mat3x2(1))).toThrow(`Invalid Mat3x2 operation '+='`)
+    expect(() => m3x2('=', mat3x2(1))).toThrow(`Invalid Mat3x2 operation '='`)
+    expect(() => m3x2(' /', mat3x2(1))).toThrow(`Invalid Mat3x2 operation ' /'`)
+    expect(() => m3x2('.', mat3x2(1))).toThrow(`Invalid Mat3x2 operation '.'`)
+    expect(() => m3x2('%', mat3x2(1))).toThrow(`Invalid Mat3x2 operation '%'`)
+
+    const m2x4 = mat2x4(1, vec2(2, 3), 4, 5, vec3(6, 7, 8)) as any
+    expect(() => m2x4('+')).toThrow(`Invalid Mat2x4 '+' operation arg. Must be number or Mat2x4`)
+    expect(() => m2x4('+', {})).toThrow(
+      `Invalid Mat2x4 '+' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('+', '')).toThrow(
+      `Invalid Mat2x4 '+' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('-', null)).toThrow(
+      `Invalid Mat2x4 '-' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('-', undefined)).toThrow(
+      `Invalid Mat2x4 '-' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('-', function () {})).toThrow(
+      `Invalid Mat2x4 '-' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('-', [])).toThrow(
+      `Invalid Mat2x4 '-' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('/', vec2(1))).toThrow(
+      `Invalid Mat2x4 '/' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('/', vec4(1))).toThrow(
+      `Invalid Mat2x4 '/' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('/', mat4x2(1))).toThrow(
+      `Invalid Mat2x4 '/' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('/', mat2(1))).toThrow(
+      `Invalid Mat2x4 '/' operation arg. Must be number or Mat2x4`,
+    )
+    expect(() => m2x4('/', mat4(1))).toThrow(
+      `Invalid Mat2x4 '/' operation arg. Must be number or Mat2x4`,
+    )
+
+    const m4x3 = mat4x3(1) as any
+    expect(() => m4x3('*')).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', '')).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', {})).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', [1])).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', null)).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', undefined)).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', mat4x3(1))).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', vec2(1))).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', vec4(1))).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+    expect(() => m4x3('*', mat4(1))).toThrow(
+      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
+    )
+  })
+
   it('copy', () => {
     const m1 = mat2(vec4(1, 2, 3, 4))
 

@@ -52,8 +52,33 @@ const isMatrix = (v: unknown): v is BaseMatrix => {
 }
 
 export const createMat = (matrixApi: MatrixApi) => {
+  const nameof =
+    matrixApi.r === matrixApi.c ? `Mat${matrixApi.r}` : `Mat${matrixApi.r}x${matrixApi.c}`
+
   const mat: BaseMatrix = ((op: string, other: number | BaseVector | BaseMatrix) => {
-    // TODO: validation
+    ;(function validate() {
+      if (typeof op !== 'string') {
+        throw new TypeError(`Invalid ${nameof} operation type: ${typeof op}`)
+      }
+
+      if (op !== '+' && op !== '-' && op !== '/' && op !== '*') {
+        throw new Error(`Invalid ${nameof} operation '${op}'`)
+      }
+
+      if (op === '*') {
+        if (typeof other == 'number') return
+        if (isVector(other) && other._api.n === matrixApi.c) return
+        if (isMatrix(other) && other._api.r === matrixApi.c) return
+        throw new Error(
+          `Invalid ${nameof} '*' operation arg. Must be number, Vec${matrixApi.c} or Mat with ${matrixApi.c} rows`,
+        )
+      } else {
+        if (typeof other == 'number') return
+        if (isMatrix(other) && other._api.r === matrixApi.r && other._api.c === matrixApi.c) return
+        throw new Error(`Invalid ${nameof} '${op}' operation arg. Must be number or ${nameof}`)
+      }
+    })()
+
     if (op === '+' || op === '-' || op === '/' || (op === '*' && typeof other === 'number')) {
       const getOtherAt: (i: number, j: number) => number =
         typeof other === 'number' ? () => other : (i, j) => (other as BaseMatrix)[i][j]
@@ -134,9 +159,7 @@ export const createMat = (matrixApi: MatrixApi) => {
       },
       set(v: BaseVector) {
         if (!isVector(v) || v._api.n !== matrixApi.c) {
-          throw new Error(
-            `Invalid ${nameofMat(matrixApi.r, matrixApi.c)} row value. Must be Vec${matrixApi.c}`,
-          )
+          throw new Error(`Invalid ${nameof} row value. Must be Vec${matrixApi.c}`)
         }
         for (let j = 0; j < matrixApi.c; j++) {
           matrixApi[_i][j] = v[j]
@@ -169,9 +192,7 @@ export const createMat = (matrixApi: MatrixApi) => {
       },
       set(v: BaseVector) {
         if (!isVector(v) || v._api.n !== matrixApi.r) {
-          throw new Error(
-            `Invalid ${nameofMat(matrixApi.r, matrixApi.c)} column value. Must be Vec${matrixApi.r}`,
-          )
+          throw new Error(`Invalid ${nameof} column value. Must be Vec${matrixApi.r}`)
         }
         for (let i = 0; i < matrixApi.r; i++) {
           matrixApi[i][_j] = v[i]

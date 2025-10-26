@@ -4,8 +4,6 @@ No-deps library for manipulating vectors and matrices with GLSL-alike syntax and
 
 TODO:
 
-Invalid vec2 operation '='
-Invalid vec2 '+' operation arg 'vec3'
+...rest operators test, like determinant, reflect
 
-Invalid mat3 '%' operation
-Invalid mat3 '*' operation arg 'undefined'
+operators validation
