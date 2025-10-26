@@ -13,6 +13,7 @@ import {
   cosh,
   cross,
   degrees,
+  determinant,
   distance,
   dot,
   exp,
@@ -24,12 +25,19 @@ import {
   length,
   log,
   log2,
+  mat2,
+  mat2x3,
   mat3,
+  mat3x2,
+  mat4,
+  mat4x3,
+  matrixCompMult,
   max,
   min,
   mix,
   mod,
   normalize,
+  outerProduct,
   pow,
   radians,
   round,
@@ -337,7 +345,27 @@ describe('op', () => {
 
   it('refract', () => {})
 
-  it('outerProduct', () => {})
+  it('outerProduct', () => {
+    const m2 = outerProduct(vec2(1, 2), vec2(3, 4))
+    expect([...m2[0]]).toEqual([3, 4])
+    expect([...m2[1]]).toEqual([6, 8])
+
+    const m3x2 = outerProduct(vec3(2, 4, 6), vec2(5, 10))
+    expect([...m3x2.columns[0]]).toEqual([10, 20, 30])
+    expect([...m3x2.columns[1]]).toEqual([20, 40, 60])
+
+    expect(matrixToArray(outerProduct(vec4(-1), vec4(-1)))).toEqual(times(16, () => 1))
+
+    const _outerProduct = outerProduct as any
+    expect(() => _outerProduct()).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct(1, 2)).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct(vec2(1))).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct(vec2(1), 1)).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct(vec4(1), mat2(1))).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct({}, vec2(1))).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct(null)).toThrow(`Invalid 'outerProduct' operator args`)
+    expect(() => _outerProduct(undefined)).toThrow(`Invalid 'outerProduct' operator args`)
+  })
 
   it('transpose', () => {
     for (let r = 2; r <= 4; r++) {
@@ -360,17 +388,70 @@ describe('op', () => {
         }
       }
     }
+
+    const _transpose = transpose as any
+    expect(() => _transpose()).toThrow(`Invalid 'transpose' operator args`)
+    expect(() => _transpose(vec2(1))).toThrow(`Invalid 'transpose' operator args`)
+    expect(() => _transpose([mat2(1)])).toThrow(`Invalid 'transpose' operator args`)
+    expect(() => _transpose(null)).toThrow(`Invalid 'transpose' operator args`)
+    expect(() => _transpose(undefined)).toThrow(`Invalid 'transpose' operator args`)
   })
 
   it('matrixCompMult', () => {
+    const m = matrixCompMult(mat2x3(1, 2, 3, 4, 5, 6), mat2x3(2, 4, 6, 8, 10, 12))
+    expect([...m[0]]).toEqual([2, 8, 18])
+    expect([...m[1]]).toEqual([32, 50, 72])
 
+    const _matrixCompMult = matrixCompMult as any
+    expect(() => _matrixCompMult()).toThrow(`Invalid 'matrixCompMult' operator args`)
+    expect(() => _matrixCompMult(mat2(1))).toThrow(`Invalid 'matrixCompMult' operator args`)
+    expect(() => _matrixCompMult([mat2(1), mat2(1)])).toThrow(
+      `Invalid 'matrixCompMult' operator args`,
+    )
+    expect(() => _matrixCompMult(mat2(1), mat2x3(1))).toThrow(
+      `Invalid 'matrixCompMult' operator args`,
+    )
+    expect(() => _matrixCompMult(undefined)).toThrow(`Invalid 'matrixCompMult' operator args`)
+    expect(() => _matrixCompMult(mat2(1), null)).toThrow(`Invalid 'matrixCompMult' operator args`)
   })
 
-  it('determinant', () => {})
+  it('determinant', () => {
+    expect(determinant(mat2(1, 2, 3, 4))).toBe(-2)
+    expect(determinant(mat3(1, 2, 3, 4, 5, 6, 7, 8, 9))).toBe(0)
+    expect(determinant(mat4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16))).toBe(0)
+
+    expect(determinant(mat2(vec2(1)))).toBe(1)
+    expect(determinant(mat3(vec3(1)))).toBe(1)
+    expect(determinant(mat4(vec4(1)))).toBe(1)
+
+    const _determinant = determinant as any
+    expect(() => _determinant(undefined)).toThrow(`Invalid 'determinant' operator args`)
+    expect(() => _determinant(vec2(1))).toThrow(`Invalid 'determinant' operator args`)
+    expect(() => _determinant('')).toThrow(`Invalid 'determinant' operator args`)
+    expect(() => _determinant(function () {})).toThrow(`Invalid 'determinant' operator args`)
+    expect(() => _determinant(1)).toThrow(`Invalid 'determinant' operator args`)
+
+    expect(() => _determinant(mat2x3(1))).toThrow(
+      `Determinant can only be calculated for square matrices`,
+    )
+    expect(() => _determinant(mat4x3(1))).toThrow(
+      `Determinant can only be calculated for square matrices`,
+    )
+  })
 
   it('inverse', () => {
     expect(matrixToArray(inverse(mat3(vec3(2, 5, 7), vec3(6, 3, 4), vec3(5, -2, -3))))).toEqual([
       1, -1, 1, -38, 41, -34, 27, -29, 24,
     ])
+
+    const _inverse = inverse as any
+    expect(() => _inverse(undefined)).toThrow(`Invalid 'inverse' operator args`)
+    expect(() => _inverse(vec4(1))).toThrow(`Invalid 'inverse' operator args`)
+    expect(() => _inverse(mat3x2(0, 0, 0, 0, 0, 0))).toThrow(
+      `Inverse matrix can only be calculated for square matrices`,
+    )
+    expect(() => _inverse(mat2(0, 0, 0, 0))).toThrow(
+      `Matrix is singular (determinant is 0), inverse does not exist`,
+    )
   })
 })

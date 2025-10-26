@@ -12,7 +12,7 @@ type IsDiagonalVector<
   ? Equal<Compare<RowCount, ColumnCount> extends 'less' ? RowCount : ColumnCount, 2>
   : Args extends [Vec3]
     ? Equal<Compare<RowCount, ColumnCount> extends 'less' ? RowCount : ColumnCount, 3>
-    : Args extends [Vec2]
+    : Args extends [Vec4]
       ? Equal<Compare<RowCount, ColumnCount> extends 'less' ? RowCount : ColumnCount, 4>
       : false
 

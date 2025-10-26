@@ -526,10 +526,22 @@ export const determinant = ((mat: BaseMatrix): number => {
     throwInvalid('determinant')
   }
 
+  if (mat._api.r !== mat._api.c) {
+    throw new Error(`Determinant can only be calculated for square matrices`)
+  }
+
   return _determinant(mat._api)
 }) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => number
 
 export const inverse = ((mat: BaseMatrix): BaseMatrix => {
+  if (!isMatrix(mat)) {
+    throwInvalid('inverse')
+  }
+
+  if (mat._api.r !== mat._api.c) {
+    throw new Error(`Inverse matrix can only be calculated for square matrices`)
+  }
+
   const det = _determinant(mat._api)
 
   if (det === 0) {

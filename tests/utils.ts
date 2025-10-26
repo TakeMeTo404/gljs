@@ -99,6 +99,8 @@ export const createVecFromDistribution = (n: number, argsDistribution: number[][
 }
 
 export const matrixToArray = (m: any) => {
+  if (typeof m?._api?.r !== 'number') throw new Error('not matrix')
+
   let result: number[] = []
 
   let i = 0
