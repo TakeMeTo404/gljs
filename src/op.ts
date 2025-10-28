@@ -66,7 +66,7 @@ const createUnaryOperator = (f: (x: number) => number, nameof: string) => {
     }
 
     return createVec(newApi)
-  }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => _<V>
+  }) as <V extends number | Vec2 | Vec3 | Vec4>(x: V) => _<V>
 }
 
 export const exp = createUnaryOperator(Math.exp, 'exp')
@@ -134,7 +134,7 @@ const createBinaryOperator = (f: (a: number, b: number) => number, nameof: strin
     }
 
     return createVec(newApi)
-  }) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: number | NoInfer<V>) => _<V>
+  }) as <V extends number | Vec2 | Vec3 | Vec4>(x: V, y: number | NoInfer<_<V>>) => _<V>
 }
 
 export const pow = createBinaryOperator((a, b) => Math.pow(a, b), 'pow')
@@ -179,9 +179,9 @@ const createTernaryOperator = (f: (a: number, b: number, c: number) => number, n
 
     return createVec(newApi)
   }) as <V extends number | Vec2 | Vec3 | Vec4>(
-    a: _<V>,
-    b: number | NoInfer<V>,
-    c: number | NoInfer<V>,
+    a: V,
+    b: number | NoInfer<_<V>>,
+    c: number | NoInfer<_<V>>,
   ) => _<V>
 }
 
@@ -230,7 +230,7 @@ export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
   }
 
   return Math.sqrt(sum)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: V, y: NoInfer<_<V>>) => number
 
 const _dot = (x: number | BaseVector, y: number | BaseVector) => {
   if (typeof x === 'number') {
@@ -249,7 +249,7 @@ export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
   validateEqualSize(x, y, 'dot')
 
   return _dot(x, y)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>, y: NoInfer<_<V>>) => number
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: V, y: NoInfer<_<V>>) => number
 
 export const cross = (a: Vec3, b: Vec3): Vec3 => {
   if (!isVector(a) || !isVector(b) || a._api.n !== 3 || b._api.n !== 3) {
@@ -287,7 +287,7 @@ export const normalize = ((v: number | BaseVector) => {
   }
 
   return createVec(newApi)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(x: _<V>) => _<V>
+}) as <V extends number | Vec2 | Vec3 | Vec4>(x: V) => _<V>
 
 export const faceforward = ((
   N: number | BaseVector,
@@ -312,7 +312,7 @@ export const faceforward = ((
     throwInvalid('faceforward')
   })()
 
-  if (dot(I as any, Nref as any) < 0) {
+  if (_dot(I, Nref) < 0) {
     return N
   } else {
     if (typeof N === 'number') {
@@ -329,7 +329,7 @@ export const faceforward = ((
 
     return createVec(newApi)
   }
-}) as <V extends number | Vec2 | Vec3 | Vec4>(N: _<V>, I: NoInfer<V>, Nref: NoInfer<V>) => _<V>
+}) as <V extends number | Vec2 | Vec3 | Vec4>(N: V, I: NoInfer<_<V>>, Nref: NoInfer<_<V>>) => _<V>
 
 export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
   validateEqualSize(I, N, 'reflect')
@@ -338,7 +338,7 @@ export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
     return I - 2 * (N as number) * I * (N as number)
   }
 
-  const d = dot(I as any, N as any)
+  const d = _dot(I as any, N as any)
 
   const newApi: VectorApi = {
     n: I._api.n,
@@ -349,13 +349,13 @@ export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
   }
 
   return createVec(newApi)
-}) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<V>) => _<V>
+}) as <V extends number | Vec2 | Vec3 | Vec4>(I: V, N: NoInfer<_<V>>) => _<V>
 
 export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: number) => {
   validateEqualSize(I, N, 'refract')
   if (typeof eta !== 'number') throwInvalid('refract')
 
-  const d = dot(I as any, N as any)
+  const d = _dot(I as any, N as any)
   const k: number = 1 - eta * eta * (1 - d * d)
 
   if (k < 0) {
@@ -387,7 +387,7 @@ export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: nu
       return createVec(newApi)
     }
   }
-}) as <V extends number | Vec2 | Vec3 | Vec4>(I: _<V>, N: NoInfer<_<V>>, eta: number) => _<V>
+}) as <V extends number | Vec2 | Vec3 | Vec4>(I: V, N: NoInfer<_<V>>, eta: number) => _<V>
 
 export const outerProduct = ((a: BaseVector, b: BaseVector): BaseMatrix => {
   if (!isVector(a) || !isVector(b)) {

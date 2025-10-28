@@ -18,6 +18,7 @@ import {
   dot,
   exp,
   exp2,
+  faceforward,
   floor,
   fract,
   inverse,
@@ -41,6 +42,8 @@ import {
   outerProduct,
   pow,
   radians,
+  reflect,
+  refract,
   round,
   sign,
   sin,
@@ -57,7 +60,7 @@ import {
   vec4,
 } from '../dist'
 import { matrixToArray, matRxC } from './utils'
-import { sum, times } from 'lodash'
+import { random, sum, times } from 'lodash'
 
 describe('op', () => {
   it('exp', () => {
@@ -645,11 +648,111 @@ describe('op', () => {
     expect(() => _normalize(mat2(1))).toThrow(`Invalid 'normalize' operator args`)
   })
 
-  it('faceforward', () => {})
+  it('faceforward', () => {
+    expect(faceforward(5, 2, 1 / 2)).toBe(-5)
+    expect(faceforward(5, -2, 1 / 2)).toBe(5)
 
-  it('reflect', () => {})
+    const Nref = vec2(-1, -1)
+    const I1 = vec2(1, 4)
+    const I2 = vec2(2, -3)
+    const N1 = vec2(2, 5)
+    const N2 = vec2(-2, -5)
 
-  it('refract', () => {})
+    expect([...faceforward(N1, I1, Nref)]).toEqual([...N1])
+    expect([...faceforward(N1, I2, Nref)]).toEqual([...N2])
+
+    expect([...faceforward(vec3(5, 0, 0), vec3(4, -3, -1), vec3(-1, 0, 0))]).toEqual([5, 0, 0])
+    expect([...faceforward(vec3(5, 0, 0), vec3(-1, -3, -1), vec3(-1, 0, 0))]).toEqual([-5, -0, -0])
+
+    const _faceforward = faceforward as any
+    expect(() => _faceforward()).toThrow(`Invalid 'faceforward' operator args`)
+    expect(() => _faceforward(1)).toThrow(`Invalid 'faceforward' operator args`)
+    expect(() => _faceforward(vec2(1))).toThrow(`Invalid 'faceforward' operator args`)
+    expect(() => _faceforward(vec2(1), 1)).toThrow(`Invalid 'faceforward' operator args`)
+    expect(() => _faceforward(vec2(1), vec2(1))).toThrow(`Invalid 'faceforward' operator args`)
+    expect(() => _faceforward(vec2(1), vec2(1), vec3(1))).toThrow(
+      `Invalid 'faceforward' operator args`,
+    )
+  })
+
+  it('reflect', () => {
+    expect(reflect(2, 1)).toBe(-2)
+    expect(reflect(5, -1)).toBe(-5)
+    expect(reflect(5, 1)).toBe(-5)
+
+    const incident = vec2(-4, 4)
+    const normal = normalize(vec2(3, 1))
+    expect([...reflect(incident, normal)]).toEqual([expect.closeTo(0.8), expect.closeTo(5.6)])
+
+    const incident3D = vec3(1, -1, 0)
+    const normal3D = vec3(0, 1, 0)
+    const reflected3D = reflect(incident3D, normal3D)
+    expect([...reflected3D]).toEqual([1, 1, 0])
+
+    const _reflect = reflect as any
+    expect(() => _reflect()).toThrow(`Invalid 'reflect' operator args`)
+    expect(() => _reflect(1)).toThrow(`Invalid 'reflect' operator args`)
+    expect(() => _reflect(vec2(1))).toThrow(`Invalid 'reflect' operator args`)
+    expect(() => _reflect(vec2(1), 1)).toThrow(`Invalid 'reflect' operator args`)
+    expect(() => _reflect(vec3(1), vec2(1))).toThrow(`Invalid 'reflect' operator args`)
+  })
+
+  it('refract', () => {
+    expect(refract(1, 1, 1)).toBe(-1)
+    expect(refract(-1, 1, 1)).toBe(-1)
+
+    const some3d = normalize(
+      vec3(random(-10, 10, true), random(-10, 10, true), random(-10, 10, true)),
+    )
+    expect([...refract(some3d, some3d, random(-10, 10, true))]).toEqual([
+      expect.closeTo(some3d.get('x') * -1),
+      expect.closeTo(some3d.get('y') * -1),
+      expect.closeTo(some3d.get('z') * -1),
+    ])
+
+    expect([...refract(some3d, some3d('*', -1), random(-10, 10, true))]).toEqual([
+      expect.closeTo(some3d[0]),
+      expect.closeTo(some3d[1]),
+      expect.closeTo(some3d[2]),
+    ])
+
+    const I = normalize(vec3(0.3, 0.3, -1.0))
+    const N = vec3(0, 0, 1)
+    const eta = 0.75
+    const R = refract(I, N, eta)
+    expect([...R]).toEqual([expect.closeTo(0.207), expect.closeTo(0.207), expect.closeTo(-0.956)])
+
+    const a = Math.random()
+    const rotX = mat3(1, 0, 0, 0, cos(a), -sin(a), 0, sin(a), cos(a))
+    const b = Math.random()
+    const rotY = mat3(cos(b), 0, sin(b), 0, 1, 0, -sin(b), 0, cos(b))
+    const c = Math.random()
+    const rotZ = mat3(cos(c), -sin(c), 0, sin(c), cos(c), 0, 0, 0, 1)
+
+    const rot = rotX('*', rotY)('*', rotZ)
+
+    const I2 = rot('*', I)
+    const N2 = rot('*', N)
+
+    const R2 = rot('*', R)
+
+    expect([...refract(I2, N2, eta)]).toEqual([
+      expect.closeTo(R2[0]),
+      expect.closeTo(R2[1]),
+      expect.closeTo(R2[2]),
+    ])
+
+    const _refract = refract as any
+    expect(() => _refract()).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(1)).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec2(1))).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec2(1), 1)).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec3(1), vec2(1))).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec3(1), vec3(1))).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec4(1), vec4(1), '0')).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec4(1), vec2(1), 1)).toThrow(`Invalid 'refract' operator args`)
+    expect(() => _refract(vec3(1), vec3(1), vec3(1))).toThrow(`Invalid 'refract' operator args`)
+  })
 
   it('outerProduct', () => {
     const m2 = outerProduct(vec2(1, 2), vec2(3, 4))
