@@ -8,9 +8,9 @@ No-deps library for manipulating vectors and matrices with GLSL-alike syntax and
 
 - 👥 GLSL clone for JavaScript with 95% similarity
 - 🪄 Magical TypeScript and developer experience from another planet 🪐
-- 🔬 tiny size (11KB), no dependencides
+- 🔬 tiny size (11KB), no dependencies
 - 🏎️ Extremely fast (and not furious)
-- 🎨 Containes exactly those utilities that you need to effectively implement 2D/3D animations in JS. Create any `vecN` or `matNxM` (`2 <= N, M <= 4`) and manipulate them with GLSL operators like `smoothstep`, `mix`, `reflect` etc.
+- 🎨 Contains exactly those utilities that you need to effectively implement 2D/3D animations in JS. Create any `vecN` or `matNxM` (`2 <= N, M <= 4`) and manipulate them with GLSL operators like `smoothstep`, `mix`, `reflect` etc.
 - 📜 Comes with informative error messages easing your debug x10 times (nice DX is our principal)
 -  👌 Compatible with both NodeJS `require()` syntax and ESM `import`
 
@@ -53,7 +53,7 @@ import { vec2, vec3, type Vec3, sin, cos, mix } from 'gljs'
 const up = vec2(0, 1)
 const left = vec2(-1, 0)
 
-const move = up('*', 2)('+', left)) // move is vec2(-1, 2)
+const move = up('*', 2)('+', left) // move is vec2(-1, 2)
 
 
 requestAnimationFrame(function rotateColor(time) {
@@ -80,10 +80,6 @@ function setSomeDivBgColor(color: Vec3){
 
 ## FAQ
 
-#### What is the anvantage of GLSL-alike syntax?
+#### What is the advantage of GLSL-alike syntax?
 
-Since I had learned GLSL I have been lacking its utilities in JS and TS. I wanted to apply my knowledge 
-
-
-
-
+Since I had learned GLSL I have been lacking its utilities in JS and TS. I wanted to apply my knowledge

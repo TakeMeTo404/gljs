@@ -1,4 +1,4 @@
-import { operations } from './const'
+import { API_SYMBOL, operations } from './const'
 import type {
   Mat2,
   Mat3,
@@ -40,7 +40,7 @@ const nameofMat = (r: number, c: number) => {
 }
 
 export type BaseMatrix = {
-  _api: MatrixApi
+  [API_SYMBOL]: MatrixApi
 
   copy: () => BaseMatrix
 
@@ -48,7 +48,7 @@ export type BaseMatrix = {
 } & Record<number, BaseVector>
 
 export const isMatrix = (v: unknown): v is BaseMatrix => {
-  return Boolean(v) && typeof v === 'function' && typeof (v as any)._api?.r === 'number'
+  return Boolean(v) && typeof v === 'function' && typeof (v as any)[API_SYMBOL]?.r === 'number'
 }
 
 export const createMat = (matrixApi: MatrixApi) => {
@@ -67,14 +67,19 @@ export const createMat = (matrixApi: MatrixApi) => {
 
       if (op === '*') {
         if (typeof other == 'number') return
-        if (isVector(other) && other._api.n === matrixApi.c) return
-        if (isMatrix(other) && other._api.r === matrixApi.c) return
+        if (isVector(other) && other[API_SYMBOL].n === matrixApi.c) return
+        if (isMatrix(other) && other[API_SYMBOL].r === matrixApi.c) return
         throw new Error(
           `Invalid ${nameof} '*' operation arg. Must be number, Vec${matrixApi.c} or Mat with ${matrixApi.c} rows`,
         )
       } else {
         if (typeof other == 'number') return
-        if (isMatrix(other) && other._api.r === matrixApi.r && other._api.c === matrixApi.c) return
+        if (
+          isMatrix(other) &&
+          other[API_SYMBOL].r === matrixApi.r &&
+          other[API_SYMBOL].c === matrixApi.c
+        )
+          return
         throw new Error(`Invalid ${nameof} '${op}' operation arg. Must be number or ${nameof}`)
       }
     })()
@@ -101,7 +106,7 @@ export const createMat = (matrixApi: MatrixApi) => {
       if (isMatrix(other)) {
         const api: MatrixApi = {
           r: matrixApi.r,
-          c: other._api.c,
+          c: other[API_SYMBOL].c,
         }
 
         for (let i = 0; i < api.r; i++) {
@@ -135,7 +140,7 @@ export const createMat = (matrixApi: MatrixApi) => {
     }
   }) as any as BaseMatrix
 
-  mat._api = matrixApi
+  mat[API_SYMBOL] = matrixApi
 
   for (let i = 0; i < matrixApi.r; i++) {
     const _i = i
@@ -158,7 +163,7 @@ export const createMat = (matrixApi: MatrixApi) => {
         return createVec(rowApi)
       },
       set(v: BaseVector) {
-        if (!isVector(v) || v._api.n !== matrixApi.c) {
+        if (!isVector(v) || v[API_SYMBOL].n !== matrixApi.c) {
           throw new Error(`Invalid ${nameof} row value. Must be Vec${matrixApi.c}`)
         }
         for (let j = 0; j < matrixApi.c; j++) {
@@ -191,7 +196,7 @@ export const createMat = (matrixApi: MatrixApi) => {
         return createVec(columnApi)
       },
       set(v: BaseVector) {
-        if (!isVector(v) || v._api.n !== matrixApi.r) {
+        if (!isVector(v) || v[API_SYMBOL].n !== matrixApi.r) {
           throw new Error(`Invalid ${nameof} column value. Must be Vec${matrixApi.r}`)
         }
         for (let i = 0; i < matrixApi.r; i++) {
@@ -235,7 +240,7 @@ const mat =
     if (args.length === 1 && isMatrix(args[0])) {
       const api = createZeroApi(rowCount, columnCount)
 
-      const other = args[0]._api
+      const other = args[0][API_SYMBOL]
 
       const minR = Math.min(api.r, other.r)
       const minC = Math.min(api.c, other.c)
@@ -259,7 +264,7 @@ const mat =
     if (
       args.length === 1 &&
       isVector(args[0]) &&
-      args[0]._api.n === Math.min(rowCount, columnCount)
+      args[0][API_SYMBOL].n === Math.min(rowCount, columnCount)
     ) {
       const api = createZeroApi(rowCount, columnCount)
 

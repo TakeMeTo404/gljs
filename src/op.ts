@@ -1,3 +1,4 @@
+import { API_SYMBOL } from './const'
 import { BaseMatrix, createMat, isMatrix, MatrixApi } from './mat'
 import {
   Mat2,
@@ -58,10 +59,10 @@ const createUnaryOperator = (f: (x: number) => number, nameof: string) => {
     }
 
     const newApi: VectorApi = {
-      n: x._api.n,
+      n: x[API_SYMBOL].n,
     }
 
-    for (let i = 0; i < x._api.n; i++) {
+    for (let i = 0; i < x[API_SYMBOL].n; i++) {
       newApi[i] = f(x[i])
     }
 
@@ -113,7 +114,7 @@ const createBinaryOperator = (f: (a: number, b: number) => number, nameof: strin
         if (typeof b === 'number') {
           return
         }
-        if (isVector(b) && b._api.n === a._api.n) {
+        if (isVector(b) && b[API_SYMBOL].n === a[API_SYMBOL].n) {
           return
         }
       }
@@ -126,7 +127,7 @@ const createBinaryOperator = (f: (a: number, b: number) => number, nameof: strin
     }
 
     const newApi: VectorApi = {
-      n: a._api.n,
+      n: a[API_SYMBOL].n,
     }
 
     for (let i = 0; i < newApi.n; i++) {
@@ -142,7 +143,7 @@ export const min = createBinaryOperator((a, b) => Math.min(a, b), 'min')
 export const max = createBinaryOperator((a, b) => Math.max(a, b), 'max')
 export const mod = createBinaryOperator((a, b) => a % b, 'mod')
 
-export const step = createBinaryOperator((egde, x) => (x < egde ? 0 : 1), 'step')
+export const step = createBinaryOperator((edge, x) => (x < edge ? 0 : 1), 'step')
 
 const createTernaryOperator = (f: (a: number, b: number, c: number) => number, nameof: string) => {
   return ((a: number | BaseVector, b: number | BaseVector, c: number | BaseVector) => {
@@ -155,8 +156,8 @@ const createTernaryOperator = (f: (a: number, b: number, c: number) => number, n
       }
 
       if (isVector(a)) {
-        if (typeof b === 'number' || (isVector(b) && b._api.n === a._api.n)) {
-          if (typeof c === 'number' || (isVector(c) && c._api.n === a._api.n)) {
+        if (typeof b === 'number' || (isVector(b) && b[API_SYMBOL].n === a[API_SYMBOL].n)) {
+          if (typeof c === 'number' || (isVector(c) && c[API_SYMBOL].n === a[API_SYMBOL].n)) {
             return
           }
         }
@@ -170,7 +171,7 @@ const createTernaryOperator = (f: (a: number, b: number, c: number) => number, n
     }
 
     const newApi: VectorApi = {
-      n: a._api.n,
+      n: a[API_SYMBOL].n,
     }
 
     for (let i = 0; i < newApi.n; i++) {
@@ -203,8 +204,8 @@ export const length = ((v: number | BaseVector) => {
   }
 
   let sum = 0
-  for (let i = 0; i < v._api.n; i++) {
-    sum += v._api[i] * v._api[i]
+  for (let i = 0; i < v[API_SYMBOL].n; i++) {
+    sum += v[API_SYMBOL][i] * v[API_SYMBOL][i]
   }
 
   return Math.sqrt(sum)
@@ -212,7 +213,7 @@ export const length = ((v: number | BaseVector) => {
 
 const validateEqualSize = (x: number | BaseVector, y: number | BaseVector, nameof: string) => {
   if (typeof x === 'number' && typeof y === 'number') return
-  if (isVector(x) && isVector(y) && x._api.n === y._api.n) return
+  if (isVector(x) && isVector(y) && x[API_SYMBOL].n === y[API_SYMBOL].n) return
 
   throwInvalid(nameof)
 }
@@ -225,8 +226,10 @@ export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
   }
 
   let sum = 0
-  for (let i = 0; i < x._api.n; i++) {
-    sum += (x._api[i] - (y as BaseVector)._api[i]) * (x._api[i] - (y as BaseVector)._api[i])
+  for (let i = 0; i < x[API_SYMBOL].n; i++) {
+    sum +=
+      (x[API_SYMBOL][i] - (y as BaseVector)[API_SYMBOL][i]) *
+      (x[API_SYMBOL][i] - (y as BaseVector)[API_SYMBOL][i])
   }
 
   return Math.sqrt(sum)
@@ -238,8 +241,8 @@ const _dot = (x: number | BaseVector, y: number | BaseVector) => {
   }
 
   let sum = 0
-  for (let i = 0; i < x._api.n; i++) {
-    sum += x._api[i] * (y as BaseVector)._api[i]
+  for (let i = 0; i < x[API_SYMBOL].n; i++) {
+    sum += x[API_SYMBOL][i] * (y as BaseVector)[API_SYMBOL][i]
   }
 
   return sum
@@ -252,7 +255,7 @@ export const dot = ((x: number | BaseVector, y: number | BaseVector) => {
 }) as <V extends number | Vec2 | Vec3 | Vec4>(x: V, y: NoInfer<_<V>>) => number
 
 export const cross = (a: Vec3, b: Vec3): Vec3 => {
-  if (!isVector(a) || !isVector(b) || a._api.n !== 3 || b._api.n !== 3) {
+  if (!isVector(a) || !isVector(b) || a[API_SYMBOL].n !== 3 || b[API_SYMBOL].n !== 3) {
     throwInvalid('cross')
   }
 
@@ -279,11 +282,11 @@ export const normalize = ((v: number | BaseVector) => {
   const l = length(v as any)
 
   const newApi: VectorApi = {
-    n: v._api.n,
+    n: v[API_SYMBOL].n,
   }
 
-  for (let i = 0; i < v._api.n; i++) {
-    newApi[i] = v._api[i] / l
+  for (let i = 0; i < v[API_SYMBOL].n; i++) {
+    newApi[i] = v[API_SYMBOL][i] / l
   }
 
   return createVec(newApi)
@@ -303,8 +306,8 @@ export const faceforward = ((
       isVector(N) &&
       isVector(I) &&
       isVector(Nref) &&
-      I._api.n === N._api.n &&
-      Nref._api.n === N._api.n
+      I[API_SYMBOL].n === N[API_SYMBOL].n &&
+      Nref[API_SYMBOL].n === N[API_SYMBOL].n
     ) {
       return
     }
@@ -320,11 +323,11 @@ export const faceforward = ((
     }
 
     const newApi: VectorApi = {
-      n: N._api.n,
+      n: N[API_SYMBOL].n,
     }
 
     for (let i = 0; i < newApi.n; i++) {
-      newApi[i] = -N._api[i]
+      newApi[i] = -N[API_SYMBOL][i]
     }
 
     return createVec(newApi)
@@ -341,7 +344,7 @@ export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
   const d = _dot(I as any, N as any)
 
   const newApi: VectorApi = {
-    n: I._api.n,
+    n: I[API_SYMBOL].n,
   }
 
   for (let i = 0; i < newApi.n; i++) {
@@ -363,7 +366,7 @@ export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: nu
       return 0
     } else {
       const newApi: VectorApi = {
-        n: I._api.n,
+        n: I[API_SYMBOL].n,
       }
 
       for (let i = 0; i < newApi.n; i++) {
@@ -377,7 +380,7 @@ export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: nu
       return eta * I - (eta * d + Math.sqrt(k)) * (N as number)
     } else {
       const newApi: VectorApi = {
-        n: I._api.n,
+        n: I[API_SYMBOL].n,
       }
 
       for (let i = 0; i < newApi.n; i++) {
@@ -395,8 +398,8 @@ export const outerProduct = ((a: BaseVector, b: BaseVector): BaseMatrix => {
   }
 
   const api: MatrixApi = {
-    r: a._api.n,
-    c: b._api.n,
+    r: a[API_SYMBOL].n,
+    c: b[API_SYMBOL].n,
   }
 
   for (let i = 0; i < api.r; i++) {
@@ -419,15 +422,15 @@ export const transpose = ((mat: BaseMatrix): BaseMatrix => {
   }
 
   const api: MatrixApi = {
-    r: mat._api.c,
-    c: mat._api.r,
+    r: mat[API_SYMBOL].c,
+    c: mat[API_SYMBOL].r,
   }
 
   for (let i = 0; i < api.r; i++) {
     api[i] = {}
 
     for (let j = 0; j < api.c; j++) {
-      api[i][j] = mat._api[j][i]
+      api[i][j] = mat[API_SYMBOL][j][i]
     }
   }
 
@@ -439,13 +442,18 @@ export const transpose = ((mat: BaseMatrix): BaseMatrix => {
 ) => MatRxC<ColumnsCount<M>, RowsCount<M>>
 
 export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
-  if (!isMatrix(x) || !isMatrix(y) || x._api.r !== y._api.r || x._api.c !== y._api.c) {
+  if (
+    !isMatrix(x) ||
+    !isMatrix(y) ||
+    x[API_SYMBOL].r !== y[API_SYMBOL].r ||
+    x[API_SYMBOL].c !== y[API_SYMBOL].c
+  ) {
     throwInvalid('matrixCompMult')
   }
 
   const api: MatrixApi = {
-    r: x._api.r,
-    c: x._api.c,
+    r: x[API_SYMBOL].r,
+    c: x[API_SYMBOL].c,
   }
 
   for (let i = 0; i < api.r; i++) {
@@ -526,11 +534,11 @@ export const determinant = ((mat: BaseMatrix): number => {
     throwInvalid('determinant')
   }
 
-  if (mat._api.r !== mat._api.c) {
+  if (mat[API_SYMBOL].r !== mat[API_SYMBOL].c) {
     throw new Error(`Determinant can only be calculated for square matrices`)
   }
 
-  return _determinant(mat._api)
+  return _determinant(mat[API_SYMBOL])
 }) as unknown as <M extends Mat2 | Mat3 | Mat4>(mat: M) => number
 
 export const inverse = ((mat: BaseMatrix): BaseMatrix => {
@@ -538,27 +546,27 @@ export const inverse = ((mat: BaseMatrix): BaseMatrix => {
     throwInvalid('inverse')
   }
 
-  if (mat._api.r !== mat._api.c) {
+  if (mat[API_SYMBOL].r !== mat[API_SYMBOL].c) {
     throw new Error(`Inverse matrix can only be calculated for square matrices`)
   }
 
-  const det = _determinant(mat._api)
+  const det = _determinant(mat[API_SYMBOL])
 
   if (det === 0) {
     throw new Error('Matrix is singular (determinant is 0), inverse does not exist')
   }
 
-  if (mat._api.r === 2) {
+  if (mat[API_SYMBOL].r === 2) {
     const newApi: MatrixApi = {
       r: 2,
       c: 2,
       0: {
-        0: mat._api[1][1] / det,
-        1: -mat._api[0][1] / det,
+        0: mat[API_SYMBOL][1][1] / det,
+        1: -mat[API_SYMBOL][0][1] / det,
       },
       1: {
-        0: -mat._api[1][0] / det,
-        1: mat._api[0][0] / det,
+        0: -mat[API_SYMBOL][1][0] / det,
+        1: mat[API_SYMBOL][0][0] / det,
       },
     }
 
@@ -566,8 +574,8 @@ export const inverse = ((mat: BaseMatrix): BaseMatrix => {
   }
 
   const invApi: MatrixApi = {
-    r: mat._api.r,
-    c: mat._api.c,
+    r: mat[API_SYMBOL].r,
+    c: mat[API_SYMBOL].c,
   }
 
   for (let i = 0; i < invApi.r; i++) {
@@ -576,7 +584,7 @@ export const inverse = ((mat: BaseMatrix): BaseMatrix => {
 
   for (let i = 0; i < invApi.r; i++) {
     for (let j = 0; j < invApi.c; j++) {
-      invApi[j][i] = (Math.pow(-1, i + j) * _determinant(_getMinor(mat._api, i, j))) / det
+      invApi[j][i] = (Math.pow(-1, i + j) * _determinant(_getMinor(mat[API_SYMBOL], i, j))) / det
     }
   }
 

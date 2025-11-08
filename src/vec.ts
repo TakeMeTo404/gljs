@@ -1,4 +1,4 @@
-import { operations } from './const'
+import { API_SYMBOL, operations } from './const'
 import type { Vec2, Vec3, Vec4, VecCreateArgs } from './types/vec'
 
 const xyzwIndexMap: Record<string, number> = {
@@ -25,7 +25,7 @@ export type VectorApi = {
 } & Record<number, number>
 
 export const isVector = (v: unknown): v is BaseVector => {
-  return Boolean(v) && typeof v === 'function' && typeof (v as any)._api?.n === 'number'
+  return Boolean(v) && typeof v === 'function' && typeof (v as any)[API_SYMBOL]?.n === 'number'
 }
 
 export const parseArgsToApi = (args: unknown[]): VectorApi | false => {
@@ -36,7 +36,7 @@ export const parseArgsToApi = (args: unknown[]): VectorApi | false => {
       api[api.n] = arg
       api.n++
     } else if (isVector(arg)) {
-      for (let i = 0; i < arg._api.n; i++) {
+      for (let i = 0; i < arg[API_SYMBOL].n; i++) {
         api[api.n] = arg[i]
         api.n++
       }
@@ -49,7 +49,7 @@ export const parseArgsToApi = (args: unknown[]): VectorApi | false => {
 }
 
 export type BaseVector = {
-  _api: VectorApi
+  [API_SYMBOL]: VectorApi
 
   get: (selection: string) => number | BaseVector
   set: (selection: string, other: number | BaseVector) => void
@@ -91,7 +91,7 @@ export const createVec = (api: VectorApi) => {
         throw new Error(`Invalid Vec${api.n} operation '${op}'`)
       }
 
-      if (typeof other === 'number' || (isVector(other) && other._api.n === api.n)) {
+      if (typeof other === 'number' || (isVector(other) && other[API_SYMBOL].n === api.n)) {
         return
       }
 
@@ -121,7 +121,7 @@ export const createVec = (api: VectorApi) => {
     }
   }) as any as BaseVector
 
-  vec._api = api
+  vec[API_SYMBOL] = api
 
   vec[Symbol.iterator] = function* () {
     for (let i = 0; i < api.n; i++) {
@@ -190,7 +190,7 @@ export const createVec = (api: VectorApi) => {
           throw new Error(`Invalid Vec${api.n}.set '${selection}' selection value. Must be number`)
         }
       } else {
-        if (!isVector(other) || other._api.n !== selection.length) {
+        if (!isVector(other) || other[API_SYMBOL].n !== selection.length) {
           throw new Error(
             `Invalid Vec${api.n}.set '${selection}' selection value. Must be Vec${selection.length}`,
           )
@@ -206,7 +206,10 @@ export const createVec = (api: VectorApi) => {
   }
 
   vec.copy = () => {
-    const newApi = { ...api }
+    const newApi: VectorApi = { n: api.n }
+    for (let i = 0; i < api.n; i++) {
+      newApi[i] = api[i]
+    }
     return createVec(newApi)
   }
 

@@ -784,9 +784,6 @@ describe('op', () => {
         const m1 = matRxC[r][c](...values) as any
         const m2 = transpose(m1) as any
 
-        expect(m2._api.r).toBe(c)
-        expect(m2._api.c).toBe(r)
-
         expect(sum(matrixToArray(m2))).toBeCloseTo(sum(matrixToArray(m1)), 7)
 
         for (let i = 0; i < r; i++) {

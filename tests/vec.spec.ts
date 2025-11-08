@@ -389,8 +389,8 @@ describe('vec', () => {
     v4('+=', -10)
     expect([...v4]).toEqual([10, 30, -10, -10])
   })
-  ;('callable invalid')
-  it('abc', () => {
+
+  it('callable invalid', () => {
     const v2 = vec2(1) as any
     expect(() => v2()).toThrow('Invalid Vec2 operation type: undefined')
     expect(() => v2(1)).toThrow('Invalid Vec2 operation type: number')
