@@ -2,6 +2,7 @@ node_modules
 dist
 
 # Editor directories and files
+.local
 *.local
 .vscode/*
 !.vscode/extensions.json
