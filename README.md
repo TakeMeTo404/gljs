@@ -41,10 +41,10 @@ const left = vec2(-1, 0)
 const up = vec2(0, 1)
 
 const someMove = left('*', 2)('+', up('*', 3))
-console.log(someMove) // vec2(-2, 3)
+console.log(String(someMove)) // vec2(-2, 3)
 
 const squared = pow(someMove, 2)
-console.log(squared) // vec2(4, 9)
+console.log(String(squared)) // vec2(4, 9)
 ```
 
 ## API documentation
@@ -183,7 +183,7 @@ const m3 = mat3(2)        // [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
 const m4 = mat4(1)        // Identity matrix scaled by 1
 
 const m2x3 = mat2x3(3)    // [[3, 0, 0], [0, 3, 0]]
-const m4x2 = mat4x2(2)    // [[2, 0], [2, 0], [0, 0], [0, 0]]
+const m4x2 = mat4x2(2)    // [[2, 0], [0, 2], [0, 0], [0, 0]]
 ```
 
 **From a diagonal vector**:
@@ -275,7 +275,7 @@ const product = m1('*', m2)       // [[19, 22], [43, 50]]
 // Non-square matrices
 const m2x3 = mat2x3(1, 2, 3, 4, 5, 6)
 const m3x2 = mat3x2(7, 8, 9, 10, 11, 12)
-const result = m2x3('*', m3x2)    // mat2x2(58, 64, 139, 154)
+const result = m2x3('*', m3x2)    // mat2(58, 64, 139, 154)
 ```
 
 **Row and column access**:
@@ -451,7 +451,7 @@ reflect(vec2(1, -1), vec2(0, 1))  // vec2(1, 1)
 refract(vec3(0, -1, 0), vec3(0, 1, 0), 1.5)  // Refracted vector
 
 // Faceforward: returns N if dot(I, Nref) < 0, else -N
-faceforward(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(1, 0, 0))  // vec3(-1, 0, 0)
+faceforward(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(1, 0, 0))  // vec3(1, 0, 0)
 ```
 
 **Matrix Operations**:
@@ -514,6 +514,6 @@ Absolutely! GLJS is written in TypeScript and provides excellent type safety. It
 
 GLJS focuses on GLSL-like syntax and developer experience while staying lightweight (11KB). Unlike heavier libraries, it has zero dependencies and provides exactly what you need for 2D/3D graphics work. If you're coming from GLSL/shader development, the API will feel immediately familiar.
 
-## Licence
+## License
 
 ISC License. See [LICENSE](LICENSE) for details.

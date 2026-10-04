@@ -1,4 +1,4 @@
-import { describe, it, expect, test } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mat2, Vec2, vec2, vec3, vec4 } from '../dist'
 import { createVec, createVecFromDistribution, distribute, findSequences } from './utils'
 import { times } from 'lodash'
