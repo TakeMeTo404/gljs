@@ -16,7 +16,7 @@ No-deps library for manipulating vectors and matrices with GLSL-like syntax and 
 
 ## Installation
 
-Prerequisites: This package requires Node.js version 14 or higher.
+Prerequisites: This package requires Node.js version 14 or higher. TypeScript users need TypeScript 5.4 or higher.
 
 ```bash
 npm install gljs
@@ -194,7 +194,7 @@ const m3 = mat3(vec3(1, 2, 3))   // [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
 
 // For non-square matrices, vector length must match min(rows, columns)
 const m2x3 = mat2x3(vec2(1, 2))  // [[1, 0, 0], [0, 2, 0]]
-const m4x2 = mat4x2(vec2(5, 6))  // [[5, 0], [6, 0], [0, 0], [0, 0]]
+const m4x2 = mat4x2(vec2(5, 6))  // [[5, 0], [0, 6], [0, 0], [0, 0]]
 ```
 
 **From another matrix** (copies window/portion):
@@ -510,6 +510,8 @@ GLJS is optimized for performance with minimal overhead. Vector and matrix opera
 #### Can I use GLJS with TypeScript?
 
 Absolutely! GLJS is written in TypeScript and provides excellent type safety. It includes comprehensive type definitions that catch dimension mismatches, invalid operations, and type errors at compile time.
+
+The type definitions require TypeScript 5.4 or higher (they rely on the `NoInfer` utility type).
 
 #### How does GLJS compare to other vector math libraries?
 

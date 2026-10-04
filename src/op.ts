@@ -263,9 +263,9 @@ export const cross = (a: Vec3, b: Vec3): Vec3 => {
     n: 3,
   }
 
-  ;(api[0] = a[1] * b[2] - a[2] * b[1]),
+  ;((api[0] = a[1] * b[2] - a[2] * b[1]),
     (api[1] = a[2] * b[0] - a[0] * b[2]),
-    (api[2] = a[0] * b[1] - a[1] * b[0])
+    (api[2] = a[0] * b[1] - a[1] * b[0]))
 
   return createVec(api) as unknown as Vec3
 }
