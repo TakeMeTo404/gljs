@@ -363,6 +363,7 @@ min(vec3(1, 2, 3), 2)     // vec3(1, 2, 2)
 
 max(5, 3)                 // 5
 mod(10, 3)                // 1
+mod(-1, 3)                // 2 (GLSL semantics, unlike JS -1 % 3 === -1)
 
 clamp(15, 0, 10)          // 10
 clamp(vec2(-5, 15), 0, 10)  // vec2(0, 10)

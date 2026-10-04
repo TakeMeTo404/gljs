@@ -141,7 +141,7 @@ const createBinaryOperator = (f: (a: number, b: number) => number, nameof: strin
 export const pow = createBinaryOperator((a, b) => Math.pow(a, b), 'pow')
 export const min = createBinaryOperator((a, b) => Math.min(a, b), 'min')
 export const max = createBinaryOperator((a, b) => Math.max(a, b), 'max')
-export const mod = createBinaryOperator((a, b) => a % b, 'mod')
+export const mod = createBinaryOperator((a, b) => a - b * Math.floor(a / b), 'mod')
 
 export const step = createBinaryOperator((edge, x) => (x < edge ? 0 : 1), 'step')
 

@@ -505,6 +505,13 @@ describe('op', () => {
     expect([...mod(vec3(2, 3, 4), 2)]).toEqual([0, 1, 0])
     expect([...mod(vec4(2, 3, 4, 5), -1)]).toEqual([0, 0, 0, 0])
 
+    // GLSL semantics: x - y * floor(x / y), result takes the sign of y
+    expect(mod(-1, 3)).toBe(2)
+    expect(mod(1, -3)).toBe(-2)
+    expect(mod(-1, -3)).toBe(-1)
+    expect(mod(-0.5, 1)).toBe(0.5)
+    expect([...mod(vec3(-1, -4, 5), 3)]).toEqual([2, 2, 2])
+
     const _mod = mod as any
     expect(() => _mod()).toThrow(`Invalid 'mod' operator args`)
     expect(() => _mod(1)).toThrow(`Invalid 'mod' operator args`)
