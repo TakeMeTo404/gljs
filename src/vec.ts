@@ -21,6 +21,7 @@ const mergedIndexMap: Record<string, number> = {
   ...rgbaIndexMap,
 }
 
+// Plain list of components, used for parsing constructor args
 export type VectorApi = {
   n: number
 } & Record<number, number>
@@ -49,8 +50,11 @@ export const parseArgsToApi = (args: unknown[]): VectorApi | false => {
   return api
 }
 
+// Components are stored directly on the vector function as plain data properties (vec[0], vec[1], ...).
+// Don't replace them with accessors (Object.defineProperty) for regular vectors: V8 then switches
+// the object to slow dictionary elements, which makes the whole library ~10x slower
 export type BaseVector = {
-  [API_SYMBOL]: VectorApi
+  [API_SYMBOL]: { n: number }
 
   get: (selection: string) => number | BaseVector
   set: (selection: string, other: number | BaseVector) => void
@@ -81,183 +85,170 @@ const isValidGetSelection = (selection: string, n: number) => {
   return true
 }
 
-export const createVec = (api: VectorApi) => {
+// Creates a zero vector. All methods access components via vec[i], so a vector
+// can be turned into a view (e.g. matrix row) by redefining its index properties
+export const createVec = (n: number): BaseVector => {
   const vec: BaseVector = ((op: string, other: number | BaseVector | BaseMatrix) => {
     ;(function validate() {
       if (typeof op !== 'string') {
-        throw new TypeError(`Invalid Vec${api.n} operation type: ${typeof op}`)
+        throw new TypeError(`Invalid Vec${n} operation type: ${typeof op}`)
       }
 
       if (!(op in operations) && !(op.length === 2 && op[1] === '=' && op[0] in operations)) {
-        throw new Error(`Invalid Vec${api.n} operation '${op}'`)
+        throw new Error(`Invalid Vec${n} operation '${op}'`)
       }
 
-      if (typeof other === 'number' || (isVector(other) && other[API_SYMBOL].n === api.n)) {
+      if (typeof other === 'number' || (isVector(other) && other[API_SYMBOL].n === n)) {
         return
       }
 
       // vec * mat – vector is treated as a row vector, like in GLSL
       if (op === '*') {
-        if (isMatrix(other) && other[API_SYMBOL].r === api.n) return
+        if (isMatrix(other) && other[API_SYMBOL].r === n) return
         throw new Error(
-          `Invalid Vec${api.n} '*' operation arg. Must be number, Vec${api.n} or Mat with ${api.n} rows`,
+          `Invalid Vec${n} '*' operation arg. Must be number, Vec${n} or Mat with ${n} rows`,
         )
       }
 
       if (op === '*=') {
-        if (isMatrix(other) && other[API_SYMBOL].r === api.n && other[API_SYMBOL].c === api.n) {
+        if (isMatrix(other) && other[API_SYMBOL].r === n && other[API_SYMBOL].c === n) {
           return
         }
-        throw new Error(
-          `Invalid Vec${api.n} '*=' operation arg. Must be number, Vec${api.n} or Mat${api.n}`,
-        )
+        throw new Error(`Invalid Vec${n} '*=' operation arg. Must be number, Vec${n} or Mat${n}`)
       }
 
-      throw new Error(`Invalid Vec${api.n} '${op}' operation arg. Must be number or Vec${api.n}`)
+      throw new Error(`Invalid Vec${n} '${op}' operation arg. Must be number or Vec${n}`)
     })()
 
     if (isMatrix(other)) {
       const matrixApi = other[API_SYMBOL]
 
-      const newApi: VectorApi = { n: matrixApi.c }
+      const result = createVec(matrixApi.c)
 
       for (let j = 0; j < matrixApi.c; j++) {
-        newApi[j] = 0
+        let sum = 0
 
         for (let i = 0; i < matrixApi.r; i++) {
-          newApi[j] += api[i] * matrixApi[j][i]
+          sum += vec[i] * matrixApi[j][i]
         }
+
+        result[j] = sum
       }
 
       if (op === '*=') {
-        for (let i = 0; i < api.n; i++) {
-          api[i] = newApi[i]
+        for (let i = 0; i < n; i++) {
+          vec[i] = result[i]
         }
         return
       }
 
-      return createVec(newApi)
+      return result
     }
 
     const isAssignOperation = !(op in operations)
 
     const f = isAssignOperation ? operations[op[0]] : operations[op]
 
-    const otherAt =
-      typeof other === 'number' ? () => other : (i: number) => (other as BaseVector)[i]
+    const target = isAssignOperation ? vec : createVec(n)
 
-    if (isAssignOperation) {
-      for (let i = 0; i < api.n; i++) {
-        api[i] = f(api[i], otherAt(i))
+    if (typeof other === 'number') {
+      for (let i = 0; i < n; i++) {
+        target[i] = f(vec[i], other)
       }
     } else {
-      const newApi: VectorApi = {
-        n: api.n,
+      for (let i = 0; i < n; i++) {
+        target[i] = f(vec[i], (other as BaseVector)[i])
       }
+    }
 
-      for (let i = 0; i < api.n; i++) {
-        newApi[i] = f(api[i], otherAt(i))
-      }
-
-      return createVec(newApi)
+    if (!isAssignOperation) {
+      return target
     }
   }) as any as BaseVector
 
-  vec[API_SYMBOL] = api
+  vec[API_SYMBOL] = { n }
 
-  vec[Symbol.iterator] = function* () {
-    for (let i = 0; i < api.n; i++) {
-      yield api[i] as number
-    }
+  for (let i = 0; i < n; i++) {
+    vec[i] = 0
   }
 
-  // define index properties
-  for (let i = 0; i < api.n; i++) {
-    const _i = i
-    Object.defineProperty(vec, _i, {
-      get() {
-        return api[_i]
-      },
-
-      set(v) {
-        api[_i] = v
-      },
-    })
+  vec[Symbol.iterator] = function* () {
+    for (let i = 0; i < n; i++) {
+      yield vec[i]
+    }
   }
 
   vec.get = (selection) => {
     ;(function validateGetSelection() {
       if (typeof selection !== 'string') {
-        throw new TypeError(`Invalid Vec${api.n}.get selection type: ${typeof selection}`)
+        throw new TypeError(`Invalid Vec${n}.get selection type: ${typeof selection}`)
       }
 
-      if (
-        selection.length === 0 ||
-        selection.length > 4 ||
-        !isValidGetSelection(selection, api.n)
-      ) {
-        throw new Error(`Invalid Vec${api.n}.get selection '${selection}'`)
+      if (selection.length === 0 || selection.length > 4 || !isValidGetSelection(selection, n)) {
+        throw new Error(`Invalid Vec${n}.get selection '${selection}'`)
       }
     })()
 
     if (selection.length === 1) {
-      return api[mergedIndexMap[selection[0]]]
+      return vec[mergedIndexMap[selection[0]]]
     }
 
-    const newApi: VectorApi = { n: selection.length }
+    const result = createVec(selection.length)
     for (let i = 0; i < selection.length; i++) {
-      newApi[i] = api[mergedIndexMap[selection[i]]]
+      result[i] = vec[mergedIndexMap[selection[i]]]
     }
 
-    return createVec(newApi)
+    return result
   }
 
   vec.set = (selection, other) => {
     ;(function validateSetSelection() {
       if (typeof selection !== 'string') {
-        throw new TypeError(`Invalid Vec${api.n}.set selection type: ${typeof selection}`)
+        throw new TypeError(`Invalid Vec${n}.set selection type: ${typeof selection}`)
       }
 
       if (
         selection.length === 0 ||
-        selection.length > api.n ||
-        !isValidGetSelection(selection, api.n) ||
+        selection.length > n ||
+        !isValidGetSelection(selection, n) ||
         new Set(selection.split('')).size !== selection.length
       ) {
-        throw new Error(`Invalid Vec${api.n}.set selection '${selection}'`)
+        throw new Error(`Invalid Vec${n}.set selection '${selection}'`)
       }
 
       if (selection.length === 1) {
         if (typeof other !== 'number') {
-          throw new Error(`Invalid Vec${api.n}.set '${selection}' selection value. Must be number`)
+          throw new Error(`Invalid Vec${n}.set '${selection}' selection value. Must be number`)
         }
       } else {
         if (!isVector(other) || other[API_SYMBOL].n !== selection.length) {
           throw new Error(
-            `Invalid Vec${api.n}.set '${selection}' selection value. Must be Vec${selection.length}`,
+            `Invalid Vec${n}.set '${selection}' selection value. Must be Vec${selection.length}`,
           )
         }
       }
     })()
 
-    const otherAt = typeof other === 'number' ? () => other : (i: number) => other[i]
-
-    for (let i = 0; i < selection.length; i++) {
-      api[mergedIndexMap[selection[i]]] = otherAt(i)
+    if (typeof other === 'number') {
+      vec[mergedIndexMap[selection[0]]] = other
+    } else {
+      for (let i = 0; i < selection.length; i++) {
+        vec[mergedIndexMap[selection[i]]] = other[i]
+      }
     }
   }
 
   vec.copy = () => {
-    const newApi: VectorApi = { n: api.n }
-    for (let i = 0; i < api.n; i++) {
-      newApi[i] = api[i]
+    const result = createVec(n)
+    for (let i = 0; i < n; i++) {
+      result[i] = vec[i]
     }
-    return createVec(newApi)
+    return result
   }
 
   vec.toString = () => {
-    let str = `vec${api.n}(`
-    for (let i = 0; i < api.n; i++) str += `${api[i]}, `
+    let str = `vec${n}(`
+    for (let i = 0; i < n; i++) str += `${vec[i]}, `
     return str.substring(0, str.length - 2) + ')'
   }
 
@@ -267,13 +258,14 @@ export const createVec = (api: VectorApi) => {
 const vec =
   (n: number) =>
   (...args: any[]) => {
+    const result = createVec(n)
+
     if (args.length === 1 && typeof args[0] === 'number') {
-      const api: VectorApi = { n }
       for (let i = 0; i < n; i++) {
-        api[i] = args[0]
+        result[i] = args[0]
       }
 
-      return createVec(api)
+      return result
     } else {
       const api = parseArgsToApi(args)
 
@@ -281,7 +273,11 @@ const vec =
         throw new Error(`Invalid Vec${n} create args`)
       }
 
-      return createVec(api)
+      for (let i = 0; i < n; i++) {
+        result[i] = api[i]
+      }
+
+      return result
     }
   }
 

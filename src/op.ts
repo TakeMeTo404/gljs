@@ -1,8 +1,8 @@
 import { API_SYMBOL } from './const'
-import { BaseMatrix, createMat, isMatrix, MatrixApi } from './mat'
+import { BaseMatrix, createMat, createZeroApi, isMatrix } from './mat'
 import { AnyMat, ColumnsCount, Mat2, Mat3, Mat4, MatCxR, RowsCount } from './types/mat'
 import { Vec2, Vec3, Vec4 } from './types/vec'
-import { BaseVector, createVec, isVector, VectorApi } from './vec'
+import { BaseVector, createVec, isVector } from './vec'
 
 type _<T extends number | Vec2 | Vec3 | Vec4> = T extends number ? number : T
 
@@ -28,15 +28,13 @@ const createUnaryOperator = (f: (x: number) => number, nameof: string) => {
       throwInvalid(nameof)
     }
 
-    const newApi: VectorApi = {
-      n: x[API_SYMBOL].n,
-    }
+    const result = createVec(x[API_SYMBOL].n)
 
     for (let i = 0; i < x[API_SYMBOL].n; i++) {
-      newApi[i] = f(x[i])
+      result[i] = f(x[i])
     }
 
-    return createVec(newApi)
+    return result
   }) as <V extends number | Vec2 | Vec3 | Vec4>(x: V) => _<V>
 }
 
@@ -96,15 +94,13 @@ const createBinaryOperator = (f: (a: number, b: number) => number, nameof: strin
       return f(a, b as number)
     }
 
-    const newApi: VectorApi = {
-      n: a[API_SYMBOL].n,
+    const result = createVec(a[API_SYMBOL].n)
+
+    for (let i = 0; i < result[API_SYMBOL].n; i++) {
+      result[i] = f(a[i], typeof b === 'number' ? b : b[i])
     }
 
-    for (let i = 0; i < newApi.n; i++) {
-      newApi[i] = f(a[i], typeof b === 'number' ? b : b[i])
-    }
-
-    return createVec(newApi)
+    return result
   }) as <V extends number | Vec2 | Vec3 | Vec4>(x: V, y: number | NoInfer<_<V>>) => _<V>
 }
 
@@ -140,15 +136,13 @@ const createTernaryOperator = (f: (a: number, b: number, c: number) => number, n
       return f(a, b as number, c as number)
     }
 
-    const newApi: VectorApi = {
-      n: a[API_SYMBOL].n,
+    const result = createVec(a[API_SYMBOL].n)
+
+    for (let i = 0; i < result[API_SYMBOL].n; i++) {
+      result[i] = f(a[i], typeof b === 'number' ? b : b[i], typeof c === 'number' ? c : c[i])
     }
 
-    for (let i = 0; i < newApi.n; i++) {
-      newApi[i] = f(a[i], typeof b === 'number' ? b : b[i], typeof c === 'number' ? c : c[i])
-    }
-
-    return createVec(newApi)
+    return result
   }) as <V extends number | Vec2 | Vec3 | Vec4>(
     a: V,
     b: number | NoInfer<_<V>>,
@@ -175,7 +169,7 @@ export const length = ((v: number | BaseVector) => {
 
   let sum = 0
   for (let i = 0; i < v[API_SYMBOL].n; i++) {
-    sum += v[API_SYMBOL][i] * v[API_SYMBOL][i]
+    sum += v[i] * v[i]
   }
 
   return Math.sqrt(sum)
@@ -198,8 +192,7 @@ export const distance = ((x: number | BaseVector, y: number | BaseVector) => {
   let sum = 0
   for (let i = 0; i < x[API_SYMBOL].n; i++) {
     sum +=
-      (x[API_SYMBOL][i] - (y as BaseVector)[API_SYMBOL][i]) *
-      (x[API_SYMBOL][i] - (y as BaseVector)[API_SYMBOL][i])
+      (x[i] - (y as BaseVector)[i]) * (x[i] - (y as BaseVector)[i])
   }
 
   return Math.sqrt(sum)
@@ -212,7 +205,7 @@ const _dot = (x: number | BaseVector, y: number | BaseVector) => {
 
   let sum = 0
   for (let i = 0; i < x[API_SYMBOL].n; i++) {
-    sum += x[API_SYMBOL][i] * (y as BaseVector)[API_SYMBOL][i]
+    sum += x[i] * (y as BaseVector)[i]
   }
 
   return sum
@@ -229,15 +222,13 @@ export const cross = (a: Vec3, b: Vec3): Vec3 => {
     throwInvalid('cross')
   }
 
-  const api: VectorApi = {
-    n: 3,
-  }
+  const result = createVec(3)
 
-  ;((api[0] = a[1] * b[2] - a[2] * b[1]),
-    (api[1] = a[2] * b[0] - a[0] * b[2]),
-    (api[2] = a[0] * b[1] - a[1] * b[0]))
+  result[0] = a[1] * b[2] - a[2] * b[1]
+  result[1] = a[2] * b[0] - a[0] * b[2]
+  result[2] = a[0] * b[1] - a[1] * b[0]
 
-  return createVec(api) as unknown as Vec3
+  return result as unknown as Vec3
 }
 
 export const normalize = ((v: number | BaseVector) => {
@@ -251,15 +242,13 @@ export const normalize = ((v: number | BaseVector) => {
 
   const l = length(v as any)
 
-  const newApi: VectorApi = {
-    n: v[API_SYMBOL].n,
-  }
+  const result = createVec(v[API_SYMBOL].n)
 
   for (let i = 0; i < v[API_SYMBOL].n; i++) {
-    newApi[i] = v[API_SYMBOL][i] / l
+    result[i] = v[i] / l
   }
 
-  return createVec(newApi)
+  return result
 }) as <V extends number | Vec2 | Vec3 | Vec4>(x: V) => _<V>
 
 export const faceforward = ((
@@ -292,15 +281,13 @@ export const faceforward = ((
       return -N
     }
 
-    const newApi: VectorApi = {
-      n: N[API_SYMBOL].n,
+    const result = createVec(N[API_SYMBOL].n)
+
+    for (let i = 0; i < result[API_SYMBOL].n; i++) {
+      result[i] = -N[i]
     }
 
-    for (let i = 0; i < newApi.n; i++) {
-      newApi[i] = -N[API_SYMBOL][i]
-    }
-
-    return createVec(newApi)
+    return result
   }
 }) as <V extends number | Vec2 | Vec3 | Vec4>(N: V, I: NoInfer<_<V>>, Nref: NoInfer<_<V>>) => _<V>
 
@@ -313,15 +300,13 @@ export const reflect = ((I: number | BaseVector, N: number | BaseVector) => {
 
   const d = _dot(I as any, N as any)
 
-  const newApi: VectorApi = {
-    n: I[API_SYMBOL].n,
+  const result = createVec(I[API_SYMBOL].n)
+
+  for (let i = 0; i < result[API_SYMBOL].n; i++) {
+    result[i] = I[i] - 2 * d * (N as BaseVector)[i]
   }
 
-  for (let i = 0; i < newApi.n; i++) {
-    newApi[i] = I[i] - 2 * d * (N as BaseVector)[i]
-  }
-
-  return createVec(newApi)
+  return result
 }) as <V extends number | Vec2 | Vec3 | Vec4>(I: V, N: NoInfer<_<V>>) => _<V>
 
 export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: number) => {
@@ -335,29 +320,20 @@ export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: nu
     if (typeof I === 'number') {
       return 0
     } else {
-      const newApi: VectorApi = {
-        n: I[API_SYMBOL].n,
-      }
-
-      for (let i = 0; i < newApi.n; i++) {
-        newApi[i] = 0
-      }
-
-      return createVec(newApi)
+      // total internal reflection – zero vector
+      return createVec(I[API_SYMBOL].n)
     }
   } else {
     if (typeof I === 'number') {
       return eta * I - (eta * d + Math.sqrt(k)) * (N as number)
     } else {
-      const newApi: VectorApi = {
-        n: I[API_SYMBOL].n,
+      const result = createVec(I[API_SYMBOL].n)
+
+      for (let i = 0; i < result[API_SYMBOL].n; i++) {
+        result[i] = eta * I[i] - (eta * d + Math.sqrt(k)) * (N as BaseVector)[i]
       }
 
-      for (let i = 0; i < newApi.n; i++) {
-        newApi[i] = eta * I[i] - (eta * d + Math.sqrt(k)) * (N as BaseVector)[i]
-      }
-
-      return createVec(newApi)
+      return result
     }
   }
 }) as <V extends number | Vec2 | Vec3 | Vec4>(I: V, N: NoInfer<_<V>>, eta: number) => _<V>
@@ -368,14 +344,9 @@ export const outerProduct = ((c: BaseVector, r: BaseVector): BaseMatrix => {
     throwInvalid('outerProduct')
   }
 
-  const api: MatrixApi = {
-    c: r[API_SYMBOL].n,
-    r: c[API_SYMBOL].n,
-  }
+  const api = createZeroApi(r[API_SYMBOL].n, c[API_SYMBOL].n)
 
   for (let j = 0; j < api.c; j++) {
-    api[j] = {}
-
     for (let i = 0; i < api.r; i++) {
       api[j][i] = c[i] * r[j]
     }
@@ -392,14 +363,9 @@ export const transpose = ((mat: BaseMatrix): BaseMatrix => {
     throwInvalid('transpose')
   }
 
-  const api: MatrixApi = {
-    c: mat[API_SYMBOL].r,
-    r: mat[API_SYMBOL].c,
-  }
+  const api = createZeroApi(mat[API_SYMBOL].r, mat[API_SYMBOL].c)
 
   for (let j = 0; j < api.c; j++) {
-    api[j] = {}
-
     for (let i = 0; i < api.r; i++) {
       api[j][i] = mat[API_SYMBOL][i][j]
     }
@@ -418,14 +384,9 @@ export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
     throwInvalid('matrixCompMult')
   }
 
-  const api: MatrixApi = {
-    c: x[API_SYMBOL].c,
-    r: x[API_SYMBOL].r,
-  }
+  const api = createZeroApi(x[API_SYMBOL].c, x[API_SYMBOL].r)
 
   for (let j = 0; j < api.c; j++) {
-    api[j] = {}
-
     for (let i = 0; i < api.r; i++) {
       api[j][i] = x[API_SYMBOL][j][i] * y[API_SYMBOL][j][i]
     }
@@ -434,8 +395,11 @@ export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
   return createMat(api)
 }) as unknown as <M extends AnyMat>(x: M, y: NoInfer<M>) => M
 
-const _getMinor = (api: MatrixApi, row: number, column: number): MatrixApi => {
-  const minorApi: MatrixApi = {
+// Plain square grid of numbers used by determinant/inverse internals
+type Grid = { r: number; c: number } & Record<number, Record<number, number>>
+
+const _getMinor = (api: Grid, row: number, column: number): Grid => {
+  const minorApi: Grid = {
     r: api.r - 1,
     c: api.c - 1,
   }
@@ -465,7 +429,7 @@ const _getMinor = (api: MatrixApi, row: number, column: number): MatrixApi => {
   return minorApi
 }
 
-const _det3 = (api: MatrixApi) => {
+const _det3 = (api: Grid) => {
   return (
     api[0][0] * api[1][1] * api[2][2] +
     api[0][1] * api[1][2] * api[2][0] +
@@ -476,7 +440,7 @@ const _det3 = (api: MatrixApi) => {
   )
 }
 
-const _determinant = (api: MatrixApi): number => {
+const _determinant = (api: Grid): number => {
   if (api.r === 2) {
     return api[0][0] * api[1][1] - api[0][1] * api[1][0]
   } else if (api.r === 3) {
@@ -519,30 +483,18 @@ export const inverse = ((mat: BaseMatrix): BaseMatrix => {
   }
 
   if (mat[API_SYMBOL].r === 2) {
-    const newApi: MatrixApi = {
-      r: 2,
-      c: 2,
-      0: {
-        0: mat[API_SYMBOL][1][1] / det,
-        1: -mat[API_SYMBOL][0][1] / det,
-      },
-      1: {
-        0: -mat[API_SYMBOL][1][0] / det,
-        1: mat[API_SYMBOL][0][0] / det,
-      },
-    }
+    const m = mat[API_SYMBOL]
+    const newApi = createZeroApi(2, 2)
+
+    newApi[0][0] = m[1][1] / det
+    newApi[0][1] = -m[0][1] / det
+    newApi[1][0] = -m[1][0] / det
+    newApi[1][1] = m[0][0] / det
 
     return createMat(newApi)
   }
 
-  const invApi: MatrixApi = {
-    r: mat[API_SYMBOL].r,
-    c: mat[API_SYMBOL].c,
-  }
-
-  for (let i = 0; i < invApi.r; i++) {
-    invApi[i] = {}
-  }
+  const invApi = createZeroApi(mat[API_SYMBOL].c, mat[API_SYMBOL].r)
 
   for (let i = 0; i < invApi.r; i++) {
     for (let j = 0; j < invApi.c; j++) {
