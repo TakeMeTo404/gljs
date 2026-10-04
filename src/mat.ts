@@ -1,4 +1,4 @@
-import { API_SYMBOL, operations } from './const'
+import { API_SYMBOL, isMatrix, operations } from './const'
 import type {
   Mat2,
   Mat3,
@@ -11,32 +11,33 @@ import type {
   Mat4x3,
   MatCreateArgs,
 } from './types/mat'
-import { Vec2, Vec3, Vec4 } from './types/vec'
 import { BaseVector, createVec, isVector, parseArgsToApi, VectorApi } from './vec'
 
+// Column-major storage like in GLSL: api[column][row]
 export type MatrixApi = {
-  r: number
   c: number
+  r: number
 } & Record<number, Record<number, number>>
 
-const createZeroApi = (rowCount: number, columnCount: number): MatrixApi => {
+const createZeroApi = (columnCount: number, rowCount: number): MatrixApi => {
   const api: MatrixApi = {
-    r: rowCount,
     c: columnCount,
+    r: rowCount,
   }
 
-  for (let i = 0; i < rowCount; i++) {
-    api[i] = {}
-    for (let j = 0; j < columnCount; j++) {
-      api[i][j] = 0
+  for (let j = 0; j < columnCount; j++) {
+    api[j] = {}
+    for (let i = 0; i < rowCount; i++) {
+      api[j][i] = 0
     }
   }
 
   return api
 }
 
-const nameofMat = (r: number, c: number) => {
-  return r === c ? `Mat${r}` : `Mat${r}x${c}`
+// GLSL naming: matCxR – C columns, R rows
+const nameofMat = (c: number, r: number) => {
+  return c === r ? `Mat${c}` : `Mat${c}x${r}`
 }
 
 export type BaseMatrix = {
@@ -44,16 +45,13 @@ export type BaseMatrix = {
 
   copy: () => BaseMatrix
 
-  columns: Record<number, BaseVector>
+  rows: Record<number, BaseVector>
 } & Record<number, BaseVector>
 
-export const isMatrix = (v: unknown): v is BaseMatrix => {
-  return Boolean(v) && typeof v === 'function' && typeof (v as any)[API_SYMBOL]?.r === 'number'
-}
+export { isMatrix }
 
 export const createMat = (matrixApi: MatrixApi) => {
-  const nameof =
-    matrixApi.r === matrixApi.c ? `Mat${matrixApi.r}` : `Mat${matrixApi.r}x${matrixApi.c}`
+  const nameof = nameofMat(matrixApi.c, matrixApi.r)
 
   const mat: BaseMatrix = ((op: string, other: number | BaseVector | BaseMatrix) => {
     ;(function validate() {
@@ -85,38 +83,40 @@ export const createMat = (matrixApi: MatrixApi) => {
     })()
 
     if (op === '+' || op === '-' || op === '/' || (op === '*' && typeof other === 'number')) {
-      const getOtherAt: (i: number, j: number) => number =
-        typeof other === 'number' ? () => other : (i, j) => (other as BaseMatrix)[i][j]
+      const getOtherAt: (j: number, i: number) => number =
+        typeof other === 'number' ? () => other : (j, i) => (other as BaseMatrix)[API_SYMBOL][j][i]
 
       const api: MatrixApi = {
-        r: matrixApi.r,
         c: matrixApi.c,
+        r: matrixApi.r,
       }
 
-      for (let i = 0; i < matrixApi.r; i++) {
-        api[i] = {}
+      for (let j = 0; j < matrixApi.c; j++) {
+        api[j] = {}
 
-        for (let j = 0; j < matrixApi.c; j++) {
-          api[i][j] = operations[op](matrixApi[i][j], getOtherAt(i, j))
+        for (let i = 0; i < matrixApi.r; i++) {
+          api[j][i] = operations[op](matrixApi[j][i], getOtherAt(j, i))
         }
       }
 
       return createMat(api)
     } else {
       if (isMatrix(other)) {
+        const otherApi = other[API_SYMBOL]
+
         const api: MatrixApi = {
+          c: otherApi.c,
           r: matrixApi.r,
-          c: other[API_SYMBOL].c,
         }
 
-        for (let i = 0; i < api.r; i++) {
-          api[i] = {}
+        for (let j = 0; j < api.c; j++) {
+          api[j] = {}
 
-          for (let j = 0; j < api.c; j++) {
-            api[i][j] = 0
+          for (let i = 0; i < api.r; i++) {
+            api[j][i] = 0
 
             for (let k = 0; k < matrixApi.c; k++) {
-              api[i][j] += matrixApi[i][k] * other[k][j]
+              api[j][i] += matrixApi[k][i] * otherApi[j][k]
             }
           }
         }
@@ -130,8 +130,8 @@ export const createMat = (matrixApi: MatrixApi) => {
         for (let i = 0; i < matrixApi.r; i++) {
           api[i] = 0
 
-          for (let j = 0; j < matrixApi.c; j++) {
-            api[i] += other[j] * matrixApi[i][j]
+          for (let k = 0; k < matrixApi.c; k++) {
+            api[i] += matrixApi[k][i] * other[k]
           }
         }
 
@@ -142,53 +142,21 @@ export const createMat = (matrixApi: MatrixApi) => {
 
   mat[API_SYMBOL] = matrixApi
 
-  for (let i = 0; i < matrixApi.r; i++) {
-    const _i = i
-    Object.defineProperty(mat, _i, {
-      get(): BaseVector {
-        const rowApi: VectorApi = { n: matrixApi.c }
-
-        for (let j = 0; j < matrixApi.c; j++) {
-          const _j = j
-          Object.defineProperty(rowApi, _j, {
-            get(): number {
-              return matrixApi[_i][_j]
-            },
-            set(v: number) {
-              matrixApi[_i][_j] = v
-            },
-          })
-        }
-
-        return createVec(rowApi)
-      },
-      set(v: BaseVector) {
-        if (!isVector(v) || v[API_SYMBOL].n !== matrixApi.c) {
-          throw new Error(`Invalid ${nameof} row value. Must be Vec${matrixApi.c}`)
-        }
-        for (let j = 0; j < matrixApi.c; j++) {
-          matrixApi[_i][j] = v[j]
-        }
-      },
-    })
-  }
-
-  mat.columns = {}
+  // m[j] – column j, like in GLSL
   for (let j = 0; j < matrixApi.c; j++) {
     const _j = j
-    Object.defineProperty(mat.columns, _j, {
+    Object.defineProperty(mat, _j, {
       get(): BaseVector {
-        const columnApi: VectorApi = {
-          n: matrixApi.r,
-        }
+        const columnApi: VectorApi = { n: matrixApi.r }
+
         for (let i = 0; i < matrixApi.r; i++) {
           const _i = i
           Object.defineProperty(columnApi, _i, {
             get(): number {
-              return matrixApi[_i][_j]
+              return matrixApi[_j][_i]
             },
             set(v: number) {
-              matrixApi[_i][_j] = v
+              matrixApi[_j][_i] = v
             },
           })
         }
@@ -200,18 +168,51 @@ export const createMat = (matrixApi: MatrixApi) => {
           throw new Error(`Invalid ${nameof} column value. Must be Vec${matrixApi.r}`)
         }
         for (let i = 0; i < matrixApi.r; i++) {
-          matrixApi[i][_j] = v[i]
+          matrixApi[_j][i] = v[i]
+        }
+      },
+    })
+  }
+
+  mat.rows = {}
+  for (let i = 0; i < matrixApi.r; i++) {
+    const _i = i
+    Object.defineProperty(mat.rows, _i, {
+      get(): BaseVector {
+        const rowApi: VectorApi = {
+          n: matrixApi.c,
+        }
+        for (let j = 0; j < matrixApi.c; j++) {
+          const _j = j
+          Object.defineProperty(rowApi, _j, {
+            get(): number {
+              return matrixApi[_j][_i]
+            },
+            set(v: number) {
+              matrixApi[_j][_i] = v
+            },
+          })
+        }
+
+        return createVec(rowApi)
+      },
+      set(v: BaseVector) {
+        if (!isVector(v) || v[API_SYMBOL].n !== matrixApi.c) {
+          throw new Error(`Invalid ${nameof} row value. Must be Vec${matrixApi.c}`)
+        }
+        for (let j = 0; j < matrixApi.c; j++) {
+          matrixApi[j][_i] = v[j]
         }
       },
     })
   }
 
   mat.copy = () => {
-    const newApi: MatrixApi = { r: matrixApi.r, c: matrixApi.c }
-    for (let i = 0; i < matrixApi.r; i++) {
-      newApi[i] = {}
-      for (let j = 0; j < matrixApi.c; j++) {
-        newApi[i][j] = matrixApi[i][j]
+    const newApi: MatrixApi = { c: matrixApi.c, r: matrixApi.r }
+    for (let j = 0; j < matrixApi.c; j++) {
+      newApi[j] = {}
+      for (let i = 0; i < matrixApi.r; i++) {
+        newApi[j][i] = matrixApi[j][i]
       }
     }
 
@@ -222,14 +223,14 @@ export const createMat = (matrixApi: MatrixApi) => {
 }
 
 const mat =
-  (rowCount: number, columnCount: number) =>
+  (columnCount: number, rowCount: number) =>
   (...args: any[]) => {
     // from number
     if (args.length === 1 && typeof args[0] === 'number') {
-      const api = createZeroApi(rowCount, columnCount)
+      const api = createZeroApi(columnCount, rowCount)
 
       // repeat scalar at diagonal elements
-      for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
+      for (let i = Math.min(columnCount, rowCount); i > 0; i--) {
         api[i - 1][i - 1] = args[0]
       }
 
@@ -238,22 +239,22 @@ const mat =
 
     // from other matrix
     if (args.length === 1 && isMatrix(args[0])) {
-      const api = createZeroApi(rowCount, columnCount)
+      const api = createZeroApi(columnCount, rowCount)
 
       const other = args[0][API_SYMBOL]
 
-      const minR = Math.min(api.r, other.r)
       const minC = Math.min(api.c, other.c)
+      const minR = Math.min(api.r, other.r)
 
       // make diagonal 1
-      for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
+      for (let i = Math.min(columnCount, rowCount); i > 0; i--) {
         api[i - 1][i - 1] = 1
       }
 
       // copy window from other matrix
-      for (let i = 0; i < minR; i++) {
-        for (let j = 0; j < minC; j++) {
-          api[i][j] = other[i][j]
+      for (let j = 0; j < minC; j++) {
+        for (let i = 0; i < minR; i++) {
+          api[j][i] = other[j][i]
         }
       }
 
@@ -264,34 +265,34 @@ const mat =
     if (
       args.length === 1 &&
       isVector(args[0]) &&
-      args[0][API_SYMBOL].n === Math.min(rowCount, columnCount)
+      args[0][API_SYMBOL].n === Math.min(columnCount, rowCount)
     ) {
-      const api = createZeroApi(rowCount, columnCount)
+      const api = createZeroApi(columnCount, rowCount)
 
       // repeat scalar at diagonal elements
-      for (let i = Math.min(rowCount, columnCount); i > 0; i--) {
+      for (let i = Math.min(columnCount, rowCount); i > 0; i--) {
         api[i - 1][i - 1] = args[0][i - 1]
       }
 
       return createMat(api)
     }
 
-    // from r*c components (numbers and vectors)
+    // from c*r components (numbers and vectors), column by column
     const argsVectorApi = parseArgsToApi(args)
 
-    if (!argsVectorApi || argsVectorApi.n !== rowCount * columnCount) {
-      throw new Error(`Invalid ${nameofMat(rowCount, columnCount)} create args`)
+    if (!argsVectorApi || argsVectorApi.n !== columnCount * rowCount) {
+      throw new Error(`Invalid ${nameofMat(columnCount, rowCount)} create args`)
     }
 
     const api: MatrixApi = {
-      r: rowCount,
       c: columnCount,
+      r: rowCount,
     }
 
-    for (let i = 0; i < rowCount; i++) {
-      api[i] = {}
-      for (let j = 0; j < columnCount; j++) {
-        api[i][j] = argsVectorApi[i * columnCount + j]
+    for (let j = 0; j < columnCount; j++) {
+      api[j] = {}
+      for (let i = 0; i < rowCount; i++) {
+        api[j][i] = argsVectorApi[j * rowCount + i]
       }
     }
 

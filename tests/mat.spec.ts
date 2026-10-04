@@ -10,6 +10,7 @@ import {
   mat4,
   mat4x2,
   mat4x3,
+  transpose,
   Vec2,
   vec2,
   Vec3,
@@ -23,7 +24,7 @@ import {
   distribute,
   findSequences,
   matrixToArray,
-  matRxC,
+  matCxR,
 } from './utils'
 import { random, range, sampleSize, sum, times } from 'lodash'
 
@@ -58,10 +59,10 @@ describe('mat', () => {
           const diagonal = createVec(i, values)
 
           if (i === Math.min(r, c)) {
-            const m = matRxC[r][c](diagonal)
+            const m = matCxR[r][c](diagonal)
             expect(sum(matrixToArray(m))).toBe(sum(values))
           } else {
-            expect(() => matRxC[r][c](diagonal)).toThrow()
+            expect(() => matCxR[r][c](diagonal)).toThrow()
           }
         }
       }
@@ -96,8 +97,8 @@ describe('mat', () => {
           for (let c2 = 2; c2 <= 4; c2++) {
             const values = times(r1 * c1, Math.random)
 
-            const m1 = matRxC[r1][c1](...values) as any
-            const m2 = matRxC[r2][c2](m1) as any
+            const m1 = matCxR[r1][c1](...values) as any
+            const m2 = matCxR[r2][c2](m1) as any
 
             for (let i = 0; i < r2; i++) {
               for (let j = 0; j < c2; j++) {
@@ -187,23 +188,24 @@ describe('mat', () => {
     }
   })
 
-  it('rowApi and columnApi', () => {
+  it('columnApi and rowApi', () => {
+    // mat2x3 – 2 columns, 3 rows
     const m1 = mat2x3(vec3(7), vec3(2, 4, 1))
 
     expect([...m1[0]]).toEqual([7, 7, 7])
     expect([...m1[1]]).toEqual([2, 4, 1])
 
-    expect([...m1.columns[0]]).toEqual([7, 2])
-    expect([...m1.columns[1]]).toEqual([7, 4])
-    expect([...m1.columns[2]]).toEqual([7, 1])
+    expect([...m1.rows[0]]).toEqual([7, 2])
+    expect([...m1.rows[1]]).toEqual([7, 4])
+    expect([...m1.rows[2]]).toEqual([7, 1])
 
     const m2 = mat2(10, 7, -7, 2)
 
     expect([...m2[0].get('xxx')]).toEqual([10, 10, 10])
     expect([...m2[1].get('yy')]).toEqual([2, 2])
-    expect(m2.columns[0].get('r')).toBe(10)
-    expect(m2.columns[1].get('g')).toBe(2)
-    expect([...m2.columns[1].get('yxyx')]).toEqual([2, 7, 2, 7])
+    expect(m2.rows[0].get('r')).toBe(10)
+    expect(m2.rows[1].get('g')).toBe(2)
+    expect([...m2.rows[1].get('yxyx')]).toEqual([2, 7, 2, 7])
 
     const m3 = mat3x4(12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
     expect(matrixToArray(m3)).toEqual([12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
@@ -214,54 +216,54 @@ describe('mat', () => {
     m3[1][1] += 10
     expect(matrixToArray(m3)).toEqual([-12, 11, 10, 9, 8, 17, 6, 5, 4, 3, 2, 1])
 
-    m3.columns[0][2] = 0
+    m3.rows[0][2] = 0
     expect(matrixToArray(m3)).toEqual([-12, 11, 10, 9, 8, 17, 6, 5, 0, 3, 2, 1])
 
     m3[0] = vec4(5, 5, 5, 5)
     expect(matrixToArray(m3)).toEqual([5, 5, 5, 5, 8, 17, 6, 5, 0, 3, 2, 1])
 
-    m3.columns[1] = vec3(8, 8, 8)
+    m3.rows[1] = vec3(8, 8, 8)
     expect(matrixToArray(m3)).toEqual([5, 8, 5, 5, 8, 8, 6, 5, 0, 8, 2, 1])
 
     const m4 = mat2(0, 1, 2, 3)
     expect(matrixToArray(m4)).toEqual([0, 1, 2, 3])
 
-    const row = m4[0]
-    expect([...row]).toEqual([0, 1])
-    row[0] = 5
+    const column = m4[0]
+    expect([...column]).toEqual([0, 1])
+    column[0] = 5
     expect(m4[0][0]).toBe(5)
     expect(matrixToArray(m4)).toEqual([5, 1, 2, 3])
-    row[1] = 6
+    column[1] = 6
     expect(matrixToArray(m4)).toEqual([5, 6, 2, 3])
-    row.set('xy', vec2(-3, -3))
+    column.set('xy', vec2(-3, -3))
     expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
 
-    const rowCopy = m4[1].copy()
-    rowCopy[0] = Math.random()
+    const columnCopy = m4[1].copy()
+    columnCopy[0] = Math.random()
     expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
-    rowCopy[1] = Math.random()
+    columnCopy[1] = Math.random()
     expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
-    rowCopy.set('gr', vec2(Math.random(), Math.random()))
+    columnCopy.set('gr', vec2(Math.random(), Math.random()))
     expect(matrixToArray(m4)).toEqual([-3, -3, 2, 3])
 
     const m5 = mat3(0, 1, 2, 3, 4, 5, 6, 7, 8)
-    const column = m5.columns[1]
-    expect([...column]).toEqual([1, 4, 7])
-    column[2] = 5
+    const row = m5.rows[1]
+    expect([...row]).toEqual([1, 4, 7])
+    row[2] = 5
     expect(m5[2][1]).toBe(5)
-    expect(m5.columns[1][2]).toBe(5)
+    expect(m5.rows[1][2]).toBe(5)
     expect(matrixToArray(m5)).toEqual([0, 1, 2, 3, 4, 5, 6, 5, 8])
-    column[1] = 6
+    row[1] = 6
     expect(matrixToArray(m5)).toEqual([0, 1, 2, 3, 6, 5, 6, 5, 8])
-    column.set('zx', vec2(-3, -6))
+    row.set('zx', vec2(-3, -6))
     expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
 
-    const columnCopy = m5.columns[2].copy()
-    columnCopy[0] = Math.random()
+    const rowCopy = m5.rows[2].copy()
+    rowCopy[0] = Math.random()
     expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
-    columnCopy[1] = Math.random()
+    rowCopy[1] = Math.random()
     expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
-    columnCopy.set('gr', vec2(Math.random(), Math.random()))
+    rowCopy.set('gr', vec2(Math.random(), Math.random()))
     expect(matrixToArray(m5)).toEqual([0, -6, 2, 3, 6, 5, 6, -3, 8])
   })
 
@@ -282,15 +284,16 @@ describe('mat', () => {
       vec3(1),
       vec4(1),
     ].forEach((value) => {
-      expect(() => (m2[0] = value)).toThrow(`Invalid Mat2 row value. Must be Vec2`)
-      expect(() => (m2.columns[0] = value)).toThrow(`Invalid Mat2 column value. Must be Vec2`)
+      expect(() => (m2[0] = value)).toThrow(`Invalid Mat2 column value. Must be Vec2`)
+      expect(() => (m2.rows[0] = value)).toThrow(`Invalid Mat2 row value. Must be Vec2`)
     })
 
+    // mat3x4 – 3 columns, 4 rows
     const m3x4 = mat3x4(1) as any
-    expect(() => (m3x4[0] = vec2(1))).toThrow(`Invalid Mat3x4 row value. Must be Vec4`)
-    expect(() => (m3x4[0] = vec3(1))).toThrow(`Invalid Mat3x4 row value. Must be Vec4`)
-    expect(() => (m3x4.columns[0] = vec2(1))).toThrow(`Invalid Mat3x4 column value. Must be Vec3`)
-    expect(() => (m3x4.columns[0] = vec4(1))).toThrow(`Invalid Mat3x4 column value. Must be Vec3`)
+    expect(() => (m3x4[0] = vec2(1))).toThrow(`Invalid Mat3x4 column value. Must be Vec4`)
+    expect(() => (m3x4[0] = vec3(1))).toThrow(`Invalid Mat3x4 column value. Must be Vec4`)
+    expect(() => (m3x4.rows[0] = vec2(1))).toThrow(`Invalid Mat3x4 row value. Must be Vec3`)
+    expect(() => (m3x4.rows[0] = vec4(1))).toThrow(`Invalid Mat3x4 row value. Must be Vec3`)
   })
 
   it('callable', () => {
@@ -327,31 +330,50 @@ describe('mat', () => {
 
     expect([...mat2(2)('*', vec2(2, 4))]).toEqual([4, 8])
 
-    expect(matrixToArray(mat2(1, 2, 3, 4)('*', mat2(5, 6, 7, 8)))).toEqual([19, 22, 43, 50])
+    // columns (1, 2), (3, 4) times columns (5, 6), (7, 8)
+    expect(matrixToArray(mat2(1, 2, 3, 4)('*', mat2(5, 6, 7, 8)))).toEqual([23, 34, 31, 46])
 
     expect(
       matrixToArray(mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)('*', mat3(9, 8, 7, 6, 5, 4, 3, 2, 1))),
-    ).toEqual([30, 24, 18, 84, 69, 54, 138, 114, 90])
+    ).toEqual([90, 114, 138, 54, 69, 84, 18, 24, 30])
 
     expect(matrixToArray(mat4(...range(1, 17))('*', mat4(...range(16, 0, -1))))).toEqual([
-      80, 70, 60, 50, 240, 214, 188, 162, 400, 358, 316, 274, 560, 502, 444, 386,
+      386, 444, 502, 560, 274, 316, 358, 400, 162, 188, 214, 240, 50, 60, 70, 80,
     ])
 
-    // Matrix * Vector multiplication tests
-    expect([...mat2(1, 2, 3, 4)('*', vec2(5, 6))]).toEqual([17, 39])
+    // Matrix * Vector multiplication tests: linear combination of columns
+    // 5 * (1, 2) + 6 * (3, 4) = (23, 34)
+    expect([...mat2(1, 2, 3, 4)('*', vec2(5, 6))]).toEqual([23, 34])
 
-    expect([...mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)('*', vec3(10, 11, 12))]).toEqual([68, 167, 266])
+    expect([...mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)('*', vec3(10, 11, 12))]).toEqual([138, 171, 204])
 
     expect([
       ...mat4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)('*', vec4(17, 18, 19, 20)),
-    ]).toEqual([190, 486, 782, 1078])
+    ]).toEqual([538, 612, 686, 760])
 
     // Non-square matrix * vector multiplication tests
-    expect([...mat2x3(1, 2, 3, 4, 5, 6)('*', vec3(7, 8, 9))]).toEqual([50, 122])
+    // mat3x2 – 3 columns, 2 rows: 7 * (1, 2) + 8 * (3, 4) + 9 * (5, 6) = (76, 100)
+    expect([...mat3x2(1, 2, 3, 4, 5, 6)('*', vec3(7, 8, 9))]).toEqual([76, 100])
 
-    expect([...mat3x4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)('*', vec4(13, 14, 15, 16))]).toEqual([
-      150, 382, 614,
+    expect([...mat4x3(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)('*', vec4(13, 14, 15, 16))]).toEqual([
+      334, 392, 450,
     ])
+
+    // Vector * Matrix multiplication tests: vector is treated as a row vector
+    // (dot((5, 6), (1, 2)), dot((5, 6), (3, 4))) = (17, 39)
+    expect([...vec2(5, 6)('*', mat2(1, 2, 3, 4))]).toEqual([17, 39])
+    expect([...vec2(1, 1)('*', mat3x2(1, 2, 3, 4, 5, 6))]).toEqual([3, 7, 11])
+    expect([...vec3(1, 1, 1)('*', mat2x3(1, 2, 3, 4, 5, 6))]).toEqual([6, 15])
+
+    // v * m equals transpose(m) * v
+    const m = mat3x4(...range(1, 13))
+    const v = vec4(2, -1, 3, 0.5)
+    expect([...v('*', m)]).toEqual([...transpose(m)('*', v)])
+
+    // v *= m for square matrices
+    const v2 = vec2(5, 6)
+    v2('*=', mat2(1, 2, 3, 4))
+    expect([...v2]).toEqual([17, 39])
 
     // Identity matrix multiplication tests
     expect(matrixToArray(mat2(1)('*', mat2(5, 6, 7, 8)))).toEqual([5, 6, 7, 8])
@@ -359,26 +381,33 @@ describe('mat', () => {
       1, 2, 3, 4, 5, 6, 7, 8, 9,
     ])
     expect([...mat4(1)('*', vec4(10, 11, 12, 13))]).toEqual([10, 11, 12, 13])
+    expect([...vec4(10, 11, 12, 13)('*', mat4(1))]).toEqual([10, 11, 12, 13])
 
     // Zero matrix multiplication tests
     expect(matrixToArray(mat2(0)('*', mat2(1, 2, 3, 4)))).toEqual([0, 0, 0, 0])
     expect([...mat3(0)('*', vec3(5, 6, 7))]).toEqual([0, 0, 0])
 
+    // mat4x3 (4 columns, 3 rows) * mat2x4 (2 columns, 4 rows) = mat2x3
     expect(
       matrixToArray(
-        mat3x4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)('*', mat4x2(13, 14, 15, 16, 17, 18, 19, 20)),
+        mat4x3(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)('*', mat2x4(13, 14, 15, 16, 17, 18, 19, 20)),
       ),
-    ).toEqual([170, 180, 426, 452, 682, 724])
+    ).toEqual([334, 392, 450, 422, 496, 570])
 
-    for (let r1 = 2; r1 <= 4; r1++) {
-      for (let c1 = 2; c1 <= 4; c1++) {
-        for (let r2 = 2; r2 <= 4; r2++) {
-          for (let c2 = 2; c2 <= 4; c2++) {
-            const m1 = matRxC[r1][c1](1) as any
-            const m2 = matRxC[r2][c2](1) as any
+    for (let c1 = 2; c1 <= 4; c1++) {
+      for (let r1 = 2; r1 <= 4; r1++) {
+        for (let c2 = 2; c2 <= 4; c2++) {
+          for (let r2 = 2; r2 <= 4; r2++) {
+            const m1 = matCxR[c1][r1](1) as any
+            const m2 = matCxR[c2][r2](1) as any
 
             if (c1 === r2) {
-              expect(matrixToArray(m1('*', m2)).length).toBe(r1 * c2)
+              // result has columns of m2 and rows of m1
+              const result = m1('*', m2)
+              expect(matrixToArray(result).length).toBe(c2 * r1)
+              expect([...result[0]].length).toBe(r1)
+            } else {
+              expect(() => m1('*', m2)).toThrow()
             }
           }
         }
@@ -439,37 +468,20 @@ describe('mat', () => {
       `Invalid Mat2x4 '/' operation arg. Must be number or Mat2x4`,
     )
 
+    // mat4x3 – 4 columns, 3 rows
     const m4x3 = mat4x3(1) as any
-    expect(() => m4x3('*')).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', '')).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', {})).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', [1])).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', null)).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', undefined)).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', mat4x3(1))).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', vec2(1))).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', vec4(1))).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
-    expect(() => m4x3('*', mat4(1))).toThrow(
-      `Invalid Mat4x3 '*' operation arg. Must be number, Vec3 or Mat with 3 rows`,
-    )
+    const m4x3Error = `Invalid Mat4x3 '*' operation arg. Must be number, Vec4 or Mat with 4 rows`
+    expect(() => m4x3('*')).toThrow(m4x3Error)
+    expect(() => m4x3('*', '')).toThrow(m4x3Error)
+    expect(() => m4x3('*', {})).toThrow(m4x3Error)
+    expect(() => m4x3('*', [1])).toThrow(m4x3Error)
+    expect(() => m4x3('*', null)).toThrow(m4x3Error)
+    expect(() => m4x3('*', undefined)).toThrow(m4x3Error)
+    expect(() => m4x3('*', mat4x3(1))).toThrow(m4x3Error)
+    expect(() => m4x3('*', vec2(1))).toThrow(m4x3Error)
+    expect(() => m4x3('*', vec3(1))).toThrow(m4x3Error)
+    expect(() => m4x3('*', mat3(1))).toThrow(m4x3Error)
+    expect(() => m4x3('*', mat2x3(1))).toThrow(m4x3Error)
   })
 
   it('copy', () => {
@@ -484,7 +496,7 @@ describe('mat', () => {
     expect(matrixToArray(m2)).toEqual([6, 2, 3, 4])
     expect(matrixToArray(m1)).toEqual([1, 2, 3, 4])
 
-    m2.columns[1].set('x', 10)
+    m2.rows[1].set('x', 10)
     expect(matrixToArray(m2)).toEqual([6, 10, 3, 4])
     expect(matrixToArray(m1)).toEqual([1, 2, 3, 4])
 
@@ -493,7 +505,7 @@ describe('mat', () => {
     expect(matrixToArray(m2)).toEqual([6, 10, 3, 4])
 
     m2 = m1.copy()
-    m2.columns[0] = vec2(10, 20)
+    m2.rows[0] = vec2(10, 20)
     expect(matrixToArray(m1)).toEqual([-2, -4, 3, 4])
     expect(matrixToArray(m2)).toEqual([10, -4, 20, 4])
   })

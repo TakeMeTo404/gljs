@@ -173,68 +173,71 @@ const copy = original.copy()  // vec3(1, 2, 3) - independent copy
 
 ### Creating matrices
 
+Matrices follow GLSL conventions:
+
+- `matCxR` has **C columns and R rows**: `mat2x3` has 2 columns and 3 rows, `mat4x2` has 4 columns and 2 rows
+- Matrices are **column-major**: constructor components fill the first column, then the second one, etc.
+- `m[i]` returns **column** `i`, and `m.rows[i]` returns row `i`
+
 Use `mat2()`, `mat3()`, `mat4()` for square matrices, or `mat2x3()`, `mat3x2()`, `mat2x4()`, `mat4x2()`, `mat3x4()`, `mat4x3()` for non-square matrices.
+
+In the examples below, matrices are shown in constructor form, i.e. as a list of components column by column.
 
 **From a single scalar** (creates diagonal matrix):
 
 ```javascript
-const m2 = mat2(5)        // [[5, 0], [0, 5]]
-const m3 = mat3(2)        // [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
-const m4 = mat4(1)        // Identity matrix scaled by 1
+const m2 = mat2(5)        // mat2(5, 0,  0, 5)
+const m3 = mat3(2)        // mat3(2, 0, 0,  0, 2, 0,  0, 0, 2)
+const m4 = mat4(1)        // identity matrix
 
-const m2x3 = mat2x3(3)    // [[3, 0, 0], [0, 3, 0]]
-const m4x2 = mat4x2(2)    // [[2, 0], [0, 2], [0, 0], [0, 0]]
+const m2x3 = mat2x3(3)    // mat2x3(3, 0, 0,  0, 3, 0)
+const m4x2 = mat4x2(2)    // mat4x2(2, 0,  0, 2,  0, 0,  0, 0)
 ```
 
 **From a diagonal vector**:
 
 ```javascript
-const m2 = mat2(vec2(4, 6))      // [[4, 0], [0, 6]]
-const m3 = mat3(vec3(1, 2, 3))   // [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
+const m2 = mat2(vec2(4, 6))      // mat2(4, 0,  0, 6)
+const m3 = mat3(vec3(1, 2, 3))   // mat3(1, 0, 0,  0, 2, 0,  0, 0, 3)
 
-// For non-square matrices, vector length must match min(rows, columns)
-const m2x3 = mat2x3(vec2(1, 2))  // [[1, 0, 0], [0, 2, 0]]
-const m4x2 = mat4x2(vec2(5, 6))  // [[5, 0], [0, 6], [0, 0], [0, 0]]
+// For non-square matrices, vector length must match min(columns, rows)
+const m2x3 = mat2x3(vec2(1, 2))  // mat2x3(1, 0, 0,  0, 2, 0)
+const m4x2 = mat4x2(vec2(5, 6))  // mat4x2(5, 0,  0, 6,  0, 0,  0, 0)
 ```
 
-**From another matrix** (copies window/portion):
+**From another matrix** (copies the top-left window, the rest is taken from the identity matrix):
 
 ```javascript
-const m3 = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
-const m2 = mat2(m3)              // [[1, 2], [4, 5]] (top-left 2x2)
-const m2x3 = mat2x3(m3)          // [[1, 2, 3], [4, 5, 6]] (first 2 rows)
+const a = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
+mat2(a)                          // mat2(1, 2,  4, 5)
+mat2x3(a)                        // mat2x3(1, 2, 3,  4, 5, 6) (first 2 columns)
 
-const m4 = mat4(16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-const m3 = mat3(m4)              // [[16, 15, 14], [12, 11, 10], [8, 7, 6]]
-const m2x4 = mat2x4(m4)          // [[16, 15, 14, 13], [12, 11, 10, 9]]
+const b = mat4(16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+mat3(b)                          // mat3(16, 15, 14,  12, 11, 10,  8, 7, 6)
+mat2x4(b)                        // mat2x4(16, 15, 14, 13,  12, 11, 10, 9)
 
-// When creating larger matrix from smaller, diagonal becomes 1
-const m2 = mat2(7)
-const m3 = mat3(m2)              // [[7, 0, 0], [0, 7, 0], [0, 0, 1]]
+// When creating larger matrix from smaller, the rest of the diagonal becomes 1
+mat3(mat2(7))                    // mat3(7, 0, 0,  0, 7, 0,  0, 0, 1)
 ```
 
-**Component-by-component** (row-major order):
+**Component-by-component** (column by column, numbers and vectors can be mixed):
 
 ```javascript
-// mat2: 2x2 = 4 components
-const m2 = mat2(1, 2, 3, 4)      // [[1, 2], [3, 4]]
+// mat2: 2 columns x 2 rows = 4 components
+const m2 = mat2(1, 2, 3, 4)      // columns: (1, 2), (3, 4)
 
-// mat3: 3x3 = 9 components
-const m3 = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)  // [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-// mat4: 4x4 = 16 components
-const m4 = mat4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
-// [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
+// mat3: 3 columns x 3 rows = 9 components
+const m3 = mat3(vec3(1, 2, 3), vec3(4, 5, 6), vec3(7, 8, 9))  // columns: (1, 2, 3), (4, 5, 6), (7, 8, 9)
 
 // Non-square matrices
-const m2x3 = mat2x3(1, 2, 3, 4, 5, 6)        // [[1, 2, 3], [4, 5, 6]]
-const m3x2 = mat3x2(1, 2, 3, 4, 5, 6)        // [[1, 2], [3, 4], [5, 6]]
-const m2x4 = mat2x4(1, 2, 3, 4, 5, 6, 7, 8)  // [[1, 2, 3, 4], [5, 6, 7, 8]]
+const m2x3 = mat2x3(1, 2, 3, 4, 5, 6)        // 2 columns: (1, 2, 3), (4, 5, 6)
+const m3x2 = mat3x2(1, 2, 3, 4, 5, 6)        // 3 columns: (1, 2), (3, 4), (5, 6)
+const m2x4 = mat2x4(1, 2, 3, 4, 5, 6, 7, 8)  // 2 columns: (1, 2, 3, 4), (5, 6, 7, 8)
 ```
 
 ### Manipulating matrices
 
-Matrices support arithmetic operations, multiplication, and row/column access:
+Matrices support arithmetic operations, multiplication, and column/row access:
 
 **Element-wise operations** (return new matrices):
 
@@ -242,69 +245,76 @@ Matrices support arithmetic operations, multiplication, and row/column access:
 const m1 = mat2(1, 2, 3, 4)
 const m2 = mat2(5, 6, 7, 8)
 
-const sum = m1('+', m2)           // [[6, 8], [10, 12]]
-const diff = m2('-', m1)          // [[4, 4], [4, 4]]
-const scaled = m1('*', 2)         // [[2, 4], [6, 8]]
-const divided = m1('/', 2)        // [[0.5, 1], [1.5, 2]]
+m1('+', m2)                       // mat2(6, 8, 10, 12)
+m2('-', m1)                       // mat2(4, 4, 4, 4)
+m1('*', 2)                        // mat2(2, 4, 6, 8)
+m1('/', 2)                        // mat2(0.5, 1, 1.5, 2)
 
 // Element-wise operations require same-size matrices
-const m3 = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
-const m3sum = m3('+', 5)          // [[6, 7, 8], [9, 10, 11], [12, 13, 14]]
+mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)('+', 5)  // mat3(6, 7, 8, 9, 10, 11, 12, 13, 14)
 ```
 
-**Matrix-vector multiplication**:
+**Matrix-vector multiplication** (`m * v`, the vector is a column vector):
 
 ```javascript
-const m = mat2(1, 2, 3, 4)
-const v = vec2(5, 6)
-const result = m('*', v)          // vec2(17, 39)
-// Calculation: [1*5 + 2*6, 3*5 + 4*6] = [17, 39]
+const m = mat2(1, 2, 3, 4)        // columns: (1, 2), (3, 4)
+m('*', vec2(5, 6))                // vec2(23, 34)
+// Calculation: 5 * (1, 2) + 6 * (3, 4) = (23, 34)
 
-const m3x2 = mat3x2(1, 2, 3, 4, 5, 6)
-const v2 = vec2(10, 20)
-const result2 = m3x2('*', v2)     // vec3(50, 110, 170)
+// mat3x2 has 3 columns, so it is multiplied by vec3 and returns vec2
+mat3x2(1, 2, 3, 4, 5, 6)('*', vec3(10, 20, 30))  // vec2(220, 280)
+```
+
+**Vector-matrix multiplication** (`v * m`, the vector is a row vector):
+
+```javascript
+vec2(5, 6)('*', mat2(1, 2, 3, 4)) // vec2(17, 39)
+// Calculation: (dot((5, 6), (1, 2)), dot((5, 6), (3, 4))) = (17, 39)
+
+// In-place version works with square matrices
+const v = vec2(5, 6)
+v('*=', mat2(1, 2, 3, 4))         // v is now vec2(17, 39)
 ```
 
 **Matrix-matrix multiplication**:
 
 ```javascript
-const m1 = mat2(1, 2, 3, 4)
-const m2 = mat2(5, 6, 7, 8)
-const product = m1('*', m2)       // [[19, 22], [43, 50]]
+mat2(1, 2, 3, 4)('*', mat2(5, 6, 7, 8))  // mat2(23, 34, 31, 46)
 
-// Non-square matrices
-const m2x3 = mat2x3(1, 2, 3, 4, 5, 6)
-const m3x2 = mat3x2(7, 8, 9, 10, 11, 12)
-const result = m2x3('*', m3x2)    // mat2(58, 64, 139, 154)
+// Non-square matrices: the number of columns of the left matrix
+// must match the number of rows of the right matrix
+const m3x2 = mat3x2(7, 8, 9, 10, 11, 12)  // 3 columns, 2 rows
+const m2x3 = mat2x3(1, 2, 3, 4, 5, 6)     // 2 columns, 3 rows
+m3x2('*', m2x3)                           // mat2(58, 64, 139, 154)
 ```
 
-**Row and column access**:
+**Column and row access**:
 
 ```javascript
 const m = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
 
-// Access rows
-const row0 = m[0]                 // vec3(1, 2, 3)
-const row1 = m[1]                 // vec3(4, 5, 6)
-const row2 = m[2]                 // vec3(7, 8, 9)
-
 // Access columns
-const col0 = m.columns[0]         // vec3(1, 4, 7)
-const col1 = m.columns[1]         // vec3(2, 5, 8)
-const col2 = m.columns[2]         // vec3(3, 6, 9)
+m[0]                              // vec3(1, 2, 3)
+m[1]                              // vec3(4, 5, 6)
+m[2]                              // vec3(7, 8, 9)
 
-// Modify rows
-m[0] = vec3(10, 20, 30)           // m is now [[10, 20, 30], [4, 5, 6], [7, 8, 9]]
+// Access rows
+m.rows[0]                         // vec3(1, 4, 7)
+m.rows[1]                         // vec3(2, 5, 8)
+m.rows[2]                         // vec3(3, 6, 9)
 
 // Modify columns
-m.columns[1] = vec3(100, 200, 300)  // m is now [[10, 100, 30], [4, 200, 6], [7, 300, 9]]
+m[0] = vec3(10, 20, 30)           // m is now mat3(10, 20, 30,  4, 5, 6,  7, 8, 9)
 
-// Modify individual elements via row/column vectors
-m[0][1] = 2                        // m[0] is now vec3(10, 2, 30)
-m.columns[1].set('xy', vec2(5, 7))  // Modifies column 1 in place
+// Modify rows
+m.rows[1] = vec3(100, 200, 300)   // m is now mat3(10, 100, 30,  4, 200, 6,  7, 300, 9)
+
+// Modify individual elements: m[column][row]
+m[0][1] = 2                       // m[0] is now vec3(10, 2, 30)
+m.rows[1].set('xy', vec2(5, 7))   // modifies row 1 in place
 ```
 
-> **Note:** Row and column vectors returned by `m[i]` and `m.columns[i]` are references to the matrix data. Modifying these vectors directly affects the original matrix. If you want to manipulate a row or column without affecting the matrix, use `.copy()` first: `m[1].copy()` or `m.columns[0].copy()`.
+> **Note:** Column and row vectors returned by `m[i]` and `m.rows[i]` are references to the matrix data. Modifying these vectors directly affects the original matrix. If you want to manipulate a column or row without affecting the matrix, use `.copy()` first: `m[1].copy()` or `m.rows[0].copy()`.
 
 **Copying matrices**:
 
@@ -460,27 +470,21 @@ faceforward(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(1, 0, 0))  // vec3(1, 0, 0)
 ```javascript
 import { outerProduct, transpose, matrixCompMult, determinant, inverse } from 'gljs'
 
-// Outer product (tensor product)
-const a = vec2(1, 2)
-const b = vec3(3, 4, 5)
-outerProduct(a, b)        // mat2x3(3, 4, 5, 6, 8, 10)
+// Outer product: c is a column vector, r is a row vector,
+// result has r.length columns and c.length rows
+outerProduct(vec2(1, 2), vec3(3, 4, 5))  // mat3x2(3, 6,  4, 8,  5, 10)
 
 // Transpose matrix
-const m = mat2x3(1, 2, 3, 4, 5, 6)
-transpose(m)              // mat3x2(1, 4, 2, 5, 3, 6)
+transpose(mat2x3(1, 2, 3, 4, 5, 6))      // mat3x2(1, 4,  2, 5,  3, 6)
 
 // Component-wise matrix multiplication
-const m1 = mat2(1, 2, 3, 4)
-const m2 = mat2(5, 6, 7, 8)
-matrixCompMult(m1, m2)    // mat2(5, 12, 21, 32)
+matrixCompMult(mat2(1, 2, 3, 4), mat2(5, 6, 7, 8))  // mat2(5, 12, 21, 32)
 
 // Determinant (square matrices only)
-const m = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9)
-determinant(m)            // 0 (singular matrix)
+determinant(mat3(1, 2, 3, 4, 5, 6, 7, 8, 9))  // 0 (singular matrix)
 
 // Matrix inverse (square matrices only)
-const m = mat2(1, 2, 3, 4)
-inverse(m)                // mat2(-2, 1, 1.5, -0.5)
+inverse(mat2(1, 2, 3, 4))                     // mat2(-2, 1, 1.5, -0.5)
 ```
 
 ## FAQ

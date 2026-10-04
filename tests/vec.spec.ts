@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mat2, Vec2, vec2, vec3, vec4 } from '../dist'
+import { mat2, mat2x4, mat4x3, Vec2, vec2, vec3, vec4 } from '../dist'
 import { createVec, createVecFromDistribution, distribute, findSequences } from './utils'
 import { times } from 'lodash'
 
@@ -413,14 +413,23 @@ describe('vec', () => {
     const v4 = vec4(1) as any
     expect(() => v4('+', vec2(1))).toThrow(`Invalid Vec4 '+' operation arg. Must be number or Vec4`)
     expect(() => v4('-', vec3(1))).toThrow(`Invalid Vec4 '-' operation arg. Must be number or Vec4`)
-    expect(() => v4('*')).toThrow(`Invalid Vec4 '*' operation arg. Must be number or Vec4`)
+    expect(() => v4('*')).toThrow(
+      `Invalid Vec4 '*' operation arg. Must be number, Vec4 or Mat with 4 rows`,
+    )
+    expect(() => v4('*', mat4x3(1))).toThrow(
+      `Invalid Vec4 '*' operation arg. Must be number, Vec4 or Mat with 4 rows`,
+    )
     expect(() => v4('/', [1])).toThrow(`Invalid Vec4 '/' operation arg. Must be number or Vec4`)
     expect(() => v4('+=', null)).toThrow(`Invalid Vec4 '+=' operation arg. Must be number or Vec4`)
     expect(() => v4('-=', undefined)).toThrow(
       `Invalid Vec4 '-=' operation arg. Must be number or Vec4`,
     )
     expect(() => v4('*=', function () {})).toThrow(
-      `Invalid Vec4 '*=' operation arg. Must be number or Vec4`,
+      `Invalid Vec4 '*=' operation arg. Must be number, Vec4 or Mat4`,
+    )
+    // '*=' with a matrix is only valid for a square matrix (result keeps the vector size)
+    expect(() => v4('*=', mat2x4(1))).toThrow(
+      `Invalid Vec4 '*=' operation arg. Must be number, Vec4 or Mat4`,
     )
     expect(() => v4('/=', '0')).toThrow(`Invalid Vec4 '/=' operation arg. Must be number or Vec4`)
     expect(() => v4('+', mat2(1))).toThrow(`Invalid Vec4 '+' operation arg. Must be number or Vec4`)

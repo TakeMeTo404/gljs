@@ -55,7 +55,7 @@ export const createVec = (n: number, args: any[]) => {
   }
 }
 
-export const matRxC: Record<
+export const matCxR: Record<
   number,
   Record<number, (...args: (number | Vec2 | Vec3 | Vec4)[]) => unknown>
 > = {
@@ -87,8 +87,8 @@ export const distribute = (numbers: number[], sizes: number[]): number[][] => {
   return result
 }
 
-export const createMatFromDistribution = (r: number, c: number, argsDistribution: number[][]) => {
-  return matRxC[r][c](...argsDistribution.map((numbers) => createVec(numbers.length, numbers)))
+export const createMatFromDistribution = (c: number, r: number, argsDistribution: number[][]) => {
+  return matCxR[c][r](...argsDistribution.map((numbers) => createVec(numbers.length, numbers)))
 }
 
 export const createVecFromDistribution = (n: number, argsDistribution: number[][]) => {

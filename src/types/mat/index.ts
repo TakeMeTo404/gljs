@@ -8,6 +8,9 @@ export type {
   Mat4,
   Mat4x2,
   Mat4x3,
-  MatRxC,
+  MatCxR,
+  AnyMat,
+  ColumnsCount,
+  RowsCount,
 } from './mat'
 export type { MatCreateArgs } from './create'

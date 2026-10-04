@@ -1,4 +1,5 @@
-import { API_SYMBOL, operations } from './const'
+import { API_SYMBOL, isMatrix, operations } from './const'
+import type { BaseMatrix } from './mat'
 import type { Vec2, Vec3, Vec4, VecCreateArgs } from './types/vec'
 
 const xyzwIndexMap: Record<string, number> = {
@@ -81,7 +82,7 @@ const isValidGetSelection = (selection: string, n: number) => {
 }
 
 export const createVec = (api: VectorApi) => {
-  const vec: BaseVector = ((op: string, other: number | BaseVector) => {
+  const vec: BaseVector = ((op: string, other: number | BaseVector | BaseMatrix) => {
     ;(function validate() {
       if (typeof op !== 'string') {
         throw new TypeError(`Invalid Vec${api.n} operation type: ${typeof op}`)
@@ -95,14 +96,55 @@ export const createVec = (api: VectorApi) => {
         return
       }
 
+      // vec * mat – vector is treated as a row vector, like in GLSL
+      if (op === '*') {
+        if (isMatrix(other) && other[API_SYMBOL].r === api.n) return
+        throw new Error(
+          `Invalid Vec${api.n} '*' operation arg. Must be number, Vec${api.n} or Mat with ${api.n} rows`,
+        )
+      }
+
+      if (op === '*=') {
+        if (isMatrix(other) && other[API_SYMBOL].r === api.n && other[API_SYMBOL].c === api.n) {
+          return
+        }
+        throw new Error(
+          `Invalid Vec${api.n} '*=' operation arg. Must be number, Vec${api.n} or Mat${api.n}`,
+        )
+      }
+
       throw new Error(`Invalid Vec${api.n} '${op}' operation arg. Must be number or Vec${api.n}`)
     })()
+
+    if (isMatrix(other)) {
+      const matrixApi = other[API_SYMBOL]
+
+      const newApi: VectorApi = { n: matrixApi.c }
+
+      for (let j = 0; j < matrixApi.c; j++) {
+        newApi[j] = 0
+
+        for (let i = 0; i < matrixApi.r; i++) {
+          newApi[j] += api[i] * matrixApi[j][i]
+        }
+      }
+
+      if (op === '*=') {
+        for (let i = 0; i < api.n; i++) {
+          api[i] = newApi[i]
+        }
+        return
+      }
+
+      return createVec(newApi)
+    }
 
     const isAssignOperation = !(op in operations)
 
     const f = isAssignOperation ? operations[op[0]] : operations[op]
 
-    const otherAt = typeof other === 'number' ? () => other : (i: number) => other[i] as number
+    const otherAt =
+      typeof other === 'number' ? () => other : (i: number) => (other as BaseVector)[i]
 
     if (isAssignOperation) {
       for (let i = 0; i < api.n; i++) {

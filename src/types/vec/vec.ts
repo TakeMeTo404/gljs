@@ -3,6 +3,7 @@ import { ArrayOfLength } from '../utils/ts-array'
 import { AnyNumberZeroToN } from '../utils/ts-number'
 import { Get_XYZW_Selection, Get_RGBA_Selection } from './get'
 import { Set_XYZW_Selection, Set_RGBA_Selection } from './set'
+import type { MatCxR } from '../mat/mat'
 
 type BasicOperation = '+' | '-' | '*' | '/'
 type BasicAssignOperation = `${BasicOperation}=`
@@ -12,6 +13,14 @@ export type CallableVector<N extends 2 | 3 | 4> = {
     op: T,
     other: number | VecN<N>,
   ): T extends BasicOperation ? VecN<N> : void
+
+  // vec * mat – vector is treated as a row vector, like in GLSL.
+  // Overloads are intentionally non-generic: a generic `other` gets erased to `any` when
+  // TypeScript compares signatures, which would make Vec3 assignable to Vec2
+  (op: '*', other: MatCxR<2, N>): Vec2
+  (op: '*', other: MatCxR<3, N>): Vec3
+  (op: '*', other: MatCxR<4, N>): Vec4
+  (op: '*=', other: MatCxR<N, N>): void
 }
 
 type Vec<N extends 2 | 3 | 4> = {

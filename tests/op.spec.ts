@@ -59,7 +59,7 @@ import {
   vec3,
   vec4,
 } from '../dist'
-import { matrixToArray, matRxC } from './utils'
+import { matrixToArray, matCxR } from './utils'
 import { random, sum, times } from 'lodash'
 
 describe('op', () => {
@@ -762,13 +762,18 @@ describe('op', () => {
   })
 
   it('outerProduct', () => {
+    // c * transpose(r): column j is c * r[j]
     const m2 = outerProduct(vec2(1, 2), vec2(3, 4))
-    expect([...m2[0]]).toEqual([3, 4])
-    expect([...m2[1]]).toEqual([6, 8])
+    expect([...m2[0]]).toEqual([3, 6])
+    expect([...m2[1]]).toEqual([4, 8])
+    expect([...m2.rows[0]]).toEqual([3, 4])
+    expect([...m2.rows[1]]).toEqual([6, 8])
 
-    const m3x2 = outerProduct(vec3(2, 4, 6), vec2(5, 10))
-    expect([...m3x2.columns[0]]).toEqual([10, 20, 30])
-    expect([...m3x2.columns[1]]).toEqual([20, 40, 60])
+    // vec3 x vec2 -> mat2x3 (2 columns, 3 rows)
+    const m2x3 = outerProduct(vec3(2, 4, 6), vec2(5, 10))
+    expect([...m2x3[0]]).toEqual([10, 20, 30])
+    expect([...m2x3[1]]).toEqual([20, 40, 60])
+    expect(() => (m2x3 as any)[2][0]).toThrow()
 
     expect(matrixToArray(outerProduct(vec4(-1), vec4(-1)))).toEqual(times(16, () => 1))
 
@@ -784,20 +789,20 @@ describe('op', () => {
   })
 
   it('transpose', () => {
-    for (let r = 2; r <= 4; r++) {
-      for (let c = 2; c <= 4; c++) {
-        const values = times(r * c, Math.random)
+    for (let c = 2; c <= 4; c++) {
+      for (let r = 2; r <= 4; r++) {
+        const values = times(c * r, Math.random)
 
-        const m1 = matRxC[r][c](...values) as any
+        const m1 = matCxR[c][r](...values) as any
         const m2 = transpose(m1) as any
 
         expect(sum(matrixToArray(m2))).toBeCloseTo(sum(matrixToArray(m1)), 7)
 
-        for (let i = 0; i < r; i++) {
-          expect([...m1[i]]).toEqual([...m2.columns[i]])
-        }
         for (let j = 0; j < c; j++) {
-          expect([...m1.columns[j]]).toEqual([...m2[j]])
+          expect([...m1[j]]).toEqual([...m2.rows[j]])
+        }
+        for (let i = 0; i < r; i++) {
+          expect([...m1.rows[i]]).toEqual([...m2[i]])
         }
       }
     }

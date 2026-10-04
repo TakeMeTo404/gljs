@@ -1,17 +1,6 @@
 import { API_SYMBOL } from './const'
 import { BaseMatrix, createMat, isMatrix, MatrixApi } from './mat'
-import {
-  Mat2,
-  Mat2x3,
-  Mat2x4,
-  Mat3,
-  Mat3x2,
-  Mat3x4,
-  Mat4,
-  Mat4x2,
-  Mat4x3,
-  MatRxC,
-} from './types/mat'
+import { AnyMat, ColumnsCount, Mat2, Mat3, Mat4, MatCxR, RowsCount } from './types/mat'
 import { Vec2, Vec3, Vec4 } from './types/vec'
 import { BaseVector, createVec, isVector, VectorApi } from './vec'
 
@@ -22,25 +11,6 @@ type VecSize<V extends Vec2 | Vec3 | Vec4> = V extends Vec2
   : V extends Vec3
     ? 3
     : V extends Vec4
-      ? 4
-      : never
-
-type RowsCount<M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4> =
-  M extends Mat2 | Mat2x3 | Mat2x4
-    ? 2
-    : M extends Mat3 | Mat3x2 | Mat3x4
-      ? 3
-      : M extends Mat4 | Mat4x2 | Mat4x3
-        ? 4
-        : never
-
-type ColumnsCount<
-  M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4,
-> = M extends Mat2 | Mat3x2 | Mat4x2
-  ? 2
-  : M extends Mat3 | Mat2x3 | Mat4x3
-    ? 3
-    : M extends Mat2x4 | Mat3x4 | Mat4
       ? 4
       : never
 
@@ -392,29 +362,30 @@ export const refract = ((I: number | BaseVector, N: number | BaseVector, eta: nu
   }
 }) as <V extends number | Vec2 | Vec3 | Vec4>(I: V, N: NoInfer<_<V>>, eta: number) => _<V>
 
-export const outerProduct = ((a: BaseVector, b: BaseVector): BaseMatrix => {
-  if (!isVector(a) || !isVector(b)) {
+// c is treated as a column vector, r as a row vector: result has r.n columns and c.n rows
+export const outerProduct = ((c: BaseVector, r: BaseVector): BaseMatrix => {
+  if (!isVector(c) || !isVector(r)) {
     throwInvalid('outerProduct')
   }
 
   const api: MatrixApi = {
-    r: a[API_SYMBOL].n,
-    c: b[API_SYMBOL].n,
+    c: r[API_SYMBOL].n,
+    r: c[API_SYMBOL].n,
   }
 
-  for (let i = 0; i < api.r; i++) {
-    api[i] = {}
+  for (let j = 0; j < api.c; j++) {
+    api[j] = {}
 
-    for (let j = 0; j < api.c; j++) {
-      api[i][j] = a[i] * b[j]
+    for (let i = 0; i < api.r; i++) {
+      api[j][i] = c[i] * r[j]
     }
   }
 
   return createMat(api)
-}) as unknown as <A extends Vec2 | Vec3 | Vec4, B extends Vec2 | Vec3 | Vec4>(
-  a: A,
-  b: B,
-) => MatRxC<VecSize<A>, VecSize<B>>
+}) as unknown as <C extends Vec2 | Vec3 | Vec4, R extends Vec2 | Vec3 | Vec4>(
+  c: C,
+  r: R,
+) => MatCxR<VecSize<R>, VecSize<C>>
 
 export const transpose = ((mat: BaseMatrix): BaseMatrix => {
   if (!isMatrix(mat)) {
@@ -422,24 +393,20 @@ export const transpose = ((mat: BaseMatrix): BaseMatrix => {
   }
 
   const api: MatrixApi = {
-    r: mat[API_SYMBOL].c,
     c: mat[API_SYMBOL].r,
+    r: mat[API_SYMBOL].c,
   }
 
-  for (let i = 0; i < api.r; i++) {
-    api[i] = {}
+  for (let j = 0; j < api.c; j++) {
+    api[j] = {}
 
-    for (let j = 0; j < api.c; j++) {
-      api[i][j] = mat[API_SYMBOL][j][i]
+    for (let i = 0; i < api.r; i++) {
+      api[j][i] = mat[API_SYMBOL][i][j]
     }
   }
 
   return createMat(api)
-}) as unknown as <
-  M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4,
->(
-  mat: M,
-) => MatRxC<ColumnsCount<M>, RowsCount<M>>
+}) as unknown as <M extends AnyMat>(mat: M) => MatCxR<RowsCount<M>, ColumnsCount<M>>
 
 export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
   if (
@@ -452,25 +419,20 @@ export const matrixCompMult = ((x: BaseMatrix, y: BaseMatrix) => {
   }
 
   const api: MatrixApi = {
-    r: x[API_SYMBOL].r,
     c: x[API_SYMBOL].c,
+    r: x[API_SYMBOL].r,
   }
 
-  for (let i = 0; i < api.r; i++) {
-    api[i] = {}
+  for (let j = 0; j < api.c; j++) {
+    api[j] = {}
 
-    for (let j = 0; j < api.c; j++) {
-      api[i][j] = x[i][j] * y[i][j]
+    for (let i = 0; i < api.r; i++) {
+      api[j][i] = x[API_SYMBOL][j][i] * y[API_SYMBOL][j][i]
     }
   }
 
   return createMat(api)
-}) as unknown as <
-  M extends Mat2 | Mat2x3 | Mat2x4 | Mat3x2 | Mat3 | Mat3x4 | Mat4x2 | Mat4x3 | Mat4,
->(
-  x: M,
-  y: NoInfer<M>,
-) => M
+}) as unknown as <M extends AnyMat>(x: M, y: NoInfer<M>) => M
 
 const _getMinor = (api: MatrixApi, row: number, column: number): MatrixApi => {
   const minorApi: MatrixApi = {
