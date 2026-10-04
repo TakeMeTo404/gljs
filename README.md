@@ -18,7 +18,7 @@ No-deps library for manipulating vectors and matrices with GLSL-like syntax and 
 Prerequisites: This package requires Node.js version 14 or higher. TypeScript users need TypeScript 5.4 or higher.
 
 ```bash
-npm install gljs
+npm install glsl-js
 ```
 
 ## Quick start guide
@@ -27,10 +27,10 @@ Import the utilities you need from the packages.
 
 ```javascript
 // for ES Modules
-import { vec2, pow } from 'gljs'
+import { vec2, pow } from 'glsl-js'
 
 // for CommonJS
-const { vec2, pow } = require('gljs')
+const { vec2, pow } = require('glsl-js')
 ```
 
 Use them and enjoy declarativity and TypeScript support.
@@ -329,7 +329,7 @@ GLJS provides GLSL-like operators organized by category:
 **Exponential and Logarithmic**:
 
 ```javascript
-import { exp, log, exp2, log2, sqrt, inversesqrt, pow } from 'gljs'
+import { exp, log, exp2, log2, sqrt, inversesqrt, pow } from 'glsl-js'
 
 exp(2)                    // e^2
 exp(vec2(0, 1))           // vec2(1, e)
@@ -352,7 +352,7 @@ pow(vec2(2, 3), 2)        // vec2(4, 9)
 **Common Math**:
 
 ```javascript
-import { abs, sign, floor, ceil, round, fract, trunc, min, max, mod, clamp } from 'gljs'
+import { abs, sign, floor, ceil, round, fract, trunc, min, max, mod, clamp } from 'glsl-js'
 
 abs(-5)                   // 5
 abs(vec2(-1, 2))          // vec2(1, 2)
@@ -382,7 +382,7 @@ clamp(vec3(1, 2, 3), vec3(0, 1, 2), vec3(2, 3, 4))  // vec3(1, 2, 3)
 **Trigonometry**:
 
 ```javascript
-import { sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh } from 'gljs'
+import { sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh } from 'glsl-js'
 
 sin(Math.PI / 2)          // 1
 cos(0)                    // 1
@@ -403,7 +403,7 @@ sin(vec2(Math.PI / 2, 0)) // vec2(1, 0)
 **Angle Conversion**:
 
 ```javascript
-import { degrees, radians } from 'gljs'
+import { degrees, radians } from 'glsl-js'
 
 degrees(Math.PI)          // 180
 radians(180)              // π
@@ -414,7 +414,7 @@ degrees(vec2(Math.PI / 2, Math.PI))  // vec2(90, 180)
 **Interpolation**:
 
 ```javascript
-import { mix, smoothstep, step } from 'gljs'
+import { mix, smoothstep, step } from 'glsl-js'
 
 // Linear interpolation: x * (1 - a) + y * a
 mix(0, 10, 0.5)           // 5
@@ -435,7 +435,7 @@ smoothstep(vec2(0, 5), vec2(10, 15), vec2(5, 10))  // vec2(~0.5, ~0.5)
 **Geometric**:
 
 ```javascript
-import { length, distance, dot, cross, normalize, faceforward, reflect, refract } from 'gljs'
+import { length, distance, dot, cross, normalize, faceforward, reflect, refract } from 'glsl-js'
 
 // Vector length (magnitude)
 length(vec2(3, 4))        // 5
@@ -467,7 +467,7 @@ faceforward(vec3(1, 0, 0), vec3(-1, 0, 0), vec3(1, 0, 0))  // vec3(1, 0, 0)
 **Matrix Operations**:
 
 ```javascript
-import { outerProduct, transpose, matrixCompMult, determinant, inverse } from 'gljs'
+import { outerProduct, transpose, matrixCompMult, determinant, inverse } from 'glsl-js'
 
 // Outer product: c is a column vector, r is a row vector,
 // result has r.length columns and c.length rows
